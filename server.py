@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import *
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 
 # TODO: import additional modules as required
 import base64
@@ -26,7 +28,7 @@ def verify_statement(statement, signed_statement, user_public_key_file):
 
         public_key.verify(
             signed_statement,
-            statement,
+            statement.encode("utf-8"),
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
             ),

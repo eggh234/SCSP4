@@ -57,7 +57,7 @@ def sign_statement(statement, user_private_key_file):
         ),
         hashes.SHA256(),
     )
-    return sign_statement
+    return signed_statement
 
 
 def login():
