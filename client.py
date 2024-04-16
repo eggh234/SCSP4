@@ -1,7 +1,8 @@
 import requests
 import base64
 import json
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import *
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
 # TODO: import additional modules as required
@@ -43,20 +44,20 @@ def post_request(server_name, action, body, node_certificate, node_key):
 
 def sign_statement(statement, user_private_key_file):
     # sign the statement withe the users private key
-    with open("path/to/key.pem", "rb") as key_file:
+    with open(user_private_key_file, "rb") as key_file:
 
         user_private_key_file = serialization.load_pem_private_key(
             key_file.read(),
             password=None,
         )
-    sign_statement = user_private_key_file.sign(
-        statement,
+    signed_statement = user_private_key_file.sign(
+        statement.encode("utf-8"),
         padding.PSS(
             mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
         ),
         hashes.SHA256(),
     )
-    return b"signed statement"
+    return sign_statement
 
 
 def login():
