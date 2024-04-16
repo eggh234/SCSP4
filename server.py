@@ -3,6 +3,7 @@ from flask_restful import Resource, Api
 from cryptography.hazmat.primitives import *
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.backends import default_backend
 
 # TODO: import additional modules as required
 import base64
@@ -22,8 +23,7 @@ def verify_statement(statement, signed_statement, user_public_key_file):
     with open(user_public_key_file, "rb") as key_file:
 
         public_key = serialization.load_pem_public_key(
-            key_file.read(),
-            password=None,
+            key_file.read(), password=None, backend=default_backend
         )
 
         public_key.verify(

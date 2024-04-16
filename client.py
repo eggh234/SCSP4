@@ -4,6 +4,7 @@ import json
 from cryptography.hazmat.primitives import *
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.backends import default_backend
 
 # TODO: import additional modules as required
 
@@ -11,8 +12,8 @@ gt_username = "yhuang916"  # TODO: Replace with your gt username within quotes
 server_name = "secure-shared-store"
 
 # These need to be created manually before you start coding.
-node_certificate = "clientX.crt"
-node_key = "clientX.key"
+node_certificate = "client1.crt"
+node_key = "client1.key"
 
 """ <!!! DO NOT MODIFY THIS FUNCTION !!!>"""
 
@@ -47,8 +48,7 @@ def sign_statement(statement, user_private_key_file):
     with open(user_private_key_file, "rb") as key_file:
 
         user_private_key_file = serialization.load_pem_private_key(
-            key_file.read(),
-            password=None,
+            key_file.read(), password=None, backend=default_backend
         )
     signed_statement = user_private_key_file.sign(
         statement.encode("utf-8"),
