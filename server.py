@@ -25,16 +25,19 @@ def verify_statement(statement, signed_statement, user_public_key_file):
         public_key = serialization.load_pem_public_key(
             key_file.read(), password=None, backend=default_backend
         )
-
+    try:
         public_key.verify(
             signed_statement,
-            statement.encode("utf-8"),
+            statement.encode(),
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
             ),
             hashes.SHA256(),
         )
-    return False
+        return True
+
+    except:
+        return False
 
 
 class login(Resource):
