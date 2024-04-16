@@ -23,7 +23,7 @@ def verify_statement(statement, signed_statement, user_public_key_file):
     with open(user_public_key_file, "rb") as key_file:
 
         public_key = serialization.load_pem_public_key(
-            key_file.read(), password=None, backend=default_backend
+            key_file.read(), backend=default_backend()
         )
     try:
         public_key.verify(

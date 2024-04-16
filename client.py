@@ -193,7 +193,7 @@ def main():
     """
 
     # Initialize variables to keep track of progress
-    server_statement = "UNKNOWN"
+    server_message = "UNKNOWN"
     server_status = "UNKNOWN"
     session_token = "UNKNOWN"
     is_login = False
@@ -202,12 +202,12 @@ def main():
     # return
     login_return = login()
 
-    server_statement = login_return["statement"]
+    server_message = login_return["message"]
     server_status = login_return["status"]
     session_token = login_return["session_token"]
 
     print("\nThis is the server response")
-    print(server_statement)
+    print(server_message)
     print(server_status)
     print(session_token)
 
