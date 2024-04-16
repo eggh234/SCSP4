@@ -1,0 +1,14 @@
+openssl genrsa -out client1.key 2048
+openssl genrsa -out client2.key 2048
+openssl req -new -key client1.key -out client1.csr
+openssl req -new -key client2.key -out client2.csr
+openssl x509 -req -in client1.csr -CA CA.crt -CAkey CA.key -CAcreateserial -out client1.crt -days 825 -sha256
+openssl x509 -req -in client2.csr -CA CA.crt -CAkey CA.key -CAcreateserial -out client2.crt -days 825 -sha256
+openssl x509 -pubkey -noout -in client1.crt > client1.pub
+openssl x509 -pubkey -noout -in client1.crt > client2.pub
+openssl genrsa -out user1.key 2048
+openssl genrsa -out user2.key 2048
+openssl genrsa -out user3.key 2048
+openssl rsa -in user1.key -pubout > user1.pub
+openssl rsa -in user1.key -pubout > user2.pub
+openssl rsa -in user1.key -pubout > user3.pub
