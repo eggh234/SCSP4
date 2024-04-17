@@ -127,24 +127,32 @@ class checkin(Resource):
     # use the .sign and the normal
     # i have a servers private key and i want to sign a file at this location how do i do this GPT
     # ask for decryption methods as well for GPT for the checkout part
-    def get_client_input():
 
-        security_flag = data["security_flag"]
-        filename = data["document_id"]
+    security_flag = data["security_flag"]
+    filename = data["document_id"]
+    client_file_data = data["file_data"]
 
-        server_checkin_file_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/server/application/documents", filename
-        )
-        client_checkin_file_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/client1/documents/checkin",
-            filename,
-        )
-        json_metadata_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/server/application/documents",
-            f"{filename}.json",
-        )
+    server_checkin_file_path = os.path.join(
+        "/home/cs6238/Desktop/Project4/server/application/documents", filename
+    )
+    client_checkin_file_path = os.path.join(
+        "/home/cs6238/Desktop/Project4/client1/documents/checkin",
+        filename,
+    )
+    json_metadata_path = os.path.join(
+        "/home/cs6238/Desktop/Project4/server/application/documents",
+        f"{filename}.json",
+    )
 
-        # Ensure the directory exists before creating files
+    # Ensure the directory exists before creating files
+    def handle_file_checkin(
+        client_checkin_file_path,
+        server_checkin_file_path,
+        json_metadata_path,
+        security_flag,
+    ):
+        # Ensure server directory exists
+        os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
         os.makedirs(os.path.dirname(json_metadata_path), exist_ok=True)
 
         # Initialize metadata JSON file
@@ -154,14 +162,13 @@ class checkin(Resource):
                     {}, file
                 )  # Create an empty JSON object if file does not exist
 
-        # Copy the file from the client to the server
+        # Read file content on the client side
         try:
-            shutil.copy(client_checkin_file_path, server_checkin_file_path)
-            print("File successfully copied.")
+            with open(client_checkin_file_path, "rb") as file:
+                file_data = file.read()
         except IOError as e:
-            print(f"An error occurred while copying the file: {e.strerror}")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+            print(f"Error reading file {client_checkin_file_path}: {e}")
+            return
 
         if security_flag == 1:
             # Encrypt the file and generate key

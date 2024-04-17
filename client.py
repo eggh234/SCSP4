@@ -154,7 +154,23 @@ def checkin(session_token):
             return None
 
     filename = get_document_id()
-    body = {"security_flag": security_flag, "document_id": filename}
+
+    def read_file_content(file_path):
+        """Reads file content into a memory and returns it."""
+        try:
+            with open(file_path, "rb") as file:
+                file_data = file.read()
+            return file_data
+        except IOError as e:
+            print(f"Error reading file {file_path}: {e}")
+            return None
+
+    file_data = read_file_content()
+    body = {
+        "security_flag": security_flag,
+        "document_id": filename,
+        "file_data": file_data,
+    }
 
     return None
     # server_response = post_request(
