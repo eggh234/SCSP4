@@ -117,10 +117,27 @@ def checkin(session_token):
     Send the request to server with required parameters (action = 'checkin') using post_request().
     The request body should contain the required parameters to ensure the file is sent to the server.
     """
+
     # copy paste file from client to server
     # if flag is 1 then encrypt with randomly generated key and store it in metadata while encrypted with servers public key
     # if flag is 2 then you create a signature for the file
     # server store the aes key inside the json file in documents folder
+    def get_user_flag():
+        while True:
+            try:
+                flag = int(
+                    input(
+                        "Please enter a flag (1 for confidentiality, 2 for integrity): "
+                    )
+                )
+                if flag in [1, 2]:
+                    return flag
+                else:
+                    print("Invalid input. Please enter either 1 or 2.")
+            except ValueError:
+                print("Invalid input. Please use numeric values.")
+
+    security_flag = get_user_flag()
 
     def get_document_id():
         base_directory = "/home/cs6238/Desktop/Project4/client1/documents/checkin/"
@@ -137,7 +154,7 @@ def checkin(session_token):
             return None
 
     filename = get_document_id()
-    body = {"security_flag": 1, "document_id": filename}
+    body = {"security_flag": security_flag, "document_id": filename}
 
     return None
     # server_response = post_request(

@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 # TODO: import additional modules as required
 import base64
 import json
+import shutil
 import os
 
 
@@ -134,7 +135,7 @@ class checkin(Resource):
         server_checkin_file_path = os.path.join(
             "/home/cs6238/Desktop/Project4/server/application/documents", filename
         )
-        client_checkin_file_path = (
+        client_checkin_file_path = os.path.join(
             "/home/cs6238/Desktop/Project4/client1/documents/checkin",
             filename,
         )
@@ -142,6 +143,25 @@ class checkin(Resource):
             "/home/cs6238/Desktop/Project4/server/application/documents",
             f"{filename}.json",
         )
+
+        # Ensure the directory exists before creating files
+        os.makedirs(os.path.dirname(json_metadata_path), exist_ok=True)
+
+        # Initialize metadata JSON file
+        if not os.path.exists(json_metadata_path):
+            with open(json_metadata_path, "w") as file:
+                json.dump(
+                    {}, file
+                )  # Create an empty JSON object if file does not exist
+
+        # Copy the file from the client to the server
+        try:
+            shutil.copy(client_checkin_file_path, server_checkin_file_path)
+            print("File successfully copied.")
+        except IOError as e:
+            print(f"An error occurred while copying the file: {e.strerror}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
         if security_flag == 1:
             # Encrypt the file and generate key
@@ -163,6 +183,7 @@ class checkin(Resource):
             metadata = {"key": key.hex(), "iv": iv.hex()}
             with open(json_metadata_path, "w") as json_file:
                 json.dump(metadata, json_file)
+            print("File successfully encrypted.")
         else:
             print(security_flag)
 
