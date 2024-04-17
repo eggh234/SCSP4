@@ -122,19 +122,23 @@ def checkin(session_token):
     # if flag is 2 then you create a signature for the file
     # server store the aes key inside the json file in documents folder
 
-    def get_user_flag():
-        while True:
-            try:
-                flag = int(input("Please enter a flag (1 or 2): "))
-                if flag in [1, 2]:
-                    return flag
-                else:
-                    print("Invalid input. Please enter either 1 or 2.")
-            except ValueError:
-                print("Invalid input. Please use numeric values.")
+    def get_document_id():
+        base_directory = "/home/cs6238/Desktop/Project4/client1/documents/checkin/"
+        file_name = input("Please enter the file name: ")
+        file_path = os.path.join(base_directory, file_name)
 
-    security_flag = get_user_flag()
-    body = {"security_flag": security_flag}
+        if os.path.isfile(file_path):
+            print("File found.")
+            return file_name
+        else:
+            print(
+                f"File not found at {file_path}. Please check the filename and try again."
+            )
+            return None
+
+    filename = get_document_id()
+    body = {"security_flag": 1, "document_id": filename}
+
     #     = os.listdir(client_checkin_file_path)
     # iterate on all files to move them to destination folder
     # for f in allfiles:
@@ -200,6 +204,7 @@ def print_main_menu():
     print("    3. Grant")
     print("    4. Delete")
     print("    5. Logout")
+
     return
 
 
