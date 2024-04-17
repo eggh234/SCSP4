@@ -4,10 +4,16 @@ from cryptography.hazmat.primitives import *
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 # TODO: import additional modules as required
 import base64
 import json
+import os
 
 
 secure_shared_service = Flask(__name__)
@@ -93,9 +99,71 @@ class checkin(Resource):
     3) 700 - Other failures
     """
 
+    # make checkin randomly generated tokens
+    # make a metadata file
+    # metadata = {
+    # client side             'doc_id': doc_id,
+    #             'owner': owner,
+    # client side             'security_flag': security_flag,
+    #             'grant_user':"",
+    #             'grant_token' : "",
+    #             'grant_access' : "",
+    #             'aes_key' : ""
+
+    #         }
+    # ask client for file path to file1 or file2
+    # open the file
+    # make a body request
+    # send it to the server including DID security flag and token
+
+    # on server side
+    # generate a Key with AES GPT this part
+    # encrypt the file1 or file 2 with the AES key and maintain the key in the metadata in the server side
+    # confidentiaity
+
+    # integrity
+    # sign the file with the key
+    # when client requests file you sign it with the servers private key
+    # create a .sign folder
+    # use the .sign and the normal
+    # i have a servers private key and i want to sign a file at this location how do i do this GPT
+    # ask for decryption methods as well for GPT for the checkout part
+    def get_client_input():
+        security_flag = data["security_flag"]
+        server_checkin_file1_path = (
+            "/home/cs6238/Desktop/Project4/server/application/documents/file1.txt"
+        )
+        client_checkin_file_path = (
+            "/home/cs6238/Desktop/Project4/client1/documents/checkin/file1.txt"
+        )
+        json_metadata_path = "/home/cs6238/Desktop/Project4/server/application/documents/file1key.txt.json"
+        if security_flag == 1:
+            # Encrypt the file and generate key
+            key = os.urandom(32)  # AES-256 key
+            iv = os.urandom(16)  # Initialization vector for AES
+            cipher = Cipher(
+                algorithms.AES(key), modes.CFB(iv), backend=default_backend()
+            )
+            encryptor = cipher.encryptor()
+            with open(client_checkin_file_path, "rb") as file:
+                file_data = file.read()
+            encrypted_data = encryptor.update(file_data) + encryptor.finalize()
+
+            # Write the encrypted data to the server file
+            with open(server_checkin_file1_path, "wb") as file:
+                file.write(iv + encrypted_data)  # Store IV with the data
+
+            # Convert key to hexadecimal and store in JSON file
+            metadata = {"key": key.hex(), "iv": iv.hex()}
+            with open(json_metadata_path, "w") as json_file:
+                json.dump(metadata, json_file)
+        else:
+            print(security_flag)
+
     def post(self):
         data = request.get_json()
         token = data["token"]
+
         success = False
         if success:
             response = {

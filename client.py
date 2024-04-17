@@ -1,6 +1,7 @@
 import requests
 import base64
 import json
+import os
 from cryptography.hazmat.primitives import *
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -12,8 +13,8 @@ gt_username = "yhuang916"  # TODO: Replace with your gt username within quotes
 server_name = "secure-shared-store"
 
 # These need to be created manually before you start coding.
-node_certificate = "client1.crt"
-node_key = "client1.key"
+node_certificate = "/home/cs6238/Desktop/Project4/client1/certs/client1.crt"
+node_key = "/home/cs6238/Desktop/Project4/client1/certs/client1.key"
 
 """ <!!! DO NOT MODIFY THIS FUNCTION !!!>"""
 
@@ -48,7 +49,7 @@ def sign_statement(statement, user_private_key_file):
     with open(user_private_key_file, "rb") as key_file:
 
         user_private_key_file = serialization.load_pem_private_key(
-            key_file.read(), password=None, backend=default_backend
+            key_file.read(), password=None, backend=default_backend()
         )
     signed_statement = user_private_key_file.sign(
         statement.encode("utf-8"),
@@ -116,6 +117,32 @@ def checkin(session_token):
     Send the request to server with required parameters (action = 'checkin') using post_request().
     The request body should contain the required parameters to ensure the file is sent to the server.
     """
+    # copy paste file from client to server
+    # if flag is 1 then encrypt with randomly generated key and store it in metadata while encrypted with servers public key
+    # if flag is 2 then you create a signature for the file
+    # server store the aes key inside the json file in documents folder
+
+    def get_user_flag():
+        while True:
+            try:
+                flag = int(input("Please enter a flag (1 or 2): "))
+                if flag in [1, 2]:
+                    return flag
+                else:
+                    print("Invalid input. Please enter either 1 or 2.")
+            except ValueError:
+                print("Invalid input. Please use numeric values.")
+
+    security_flag = get_user_flag
+    body = {
+        "security_flag": security_flag,
+    }
+    #     = os.listdir(client_checkin_file_path)
+    # iterate on all files to move them to destination folder
+    # for f in allfiles:
+    #     src_path = os.path.join(client_checkin_file_path, f)
+    #     dst_path = os.path.join(server_checkin_file1_path, f)
+    #     os.rename(src_path, dst_path)
 
     return
 
