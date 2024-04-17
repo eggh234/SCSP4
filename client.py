@@ -142,21 +142,29 @@ def checkin(session_token):
     def get_document_id():
         base_directory = "/home/cs6238/Desktop/Project4/client1/documents/checkin/"
         file_name = input("Please enter the file name: ")
-        file_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/client1/documents/checkin",
-            filename,
-        )
+        file_path = os.path.join(base_directory, file_name)
 
         if os.path.isfile(file_path):
             print("File found.")
-            return file_name
+            return file_path  # Return the full path if file is found
         else:
             print(
                 f"File not found at {file_path}. Please check the filename and try again."
             )
             return None
 
-    filename = get_document_id()
+    def read_file_content(file_path):
+        """Reads file content into memory and returns it."""
+        try:
+            with open(file_path, "rb") as file:
+                file_data = file.read()
+            return file_data
+        except IOError as e:
+            print(f"Error reading file {file_path}: {e}")
+            return None
+
+    # Use the full path returned from get_document_id
+    file_path = get_document_id()
 
     def read_file_content(file_path):
         """Reads file content into a memory and returns it."""
