@@ -142,7 +142,10 @@ def checkin(session_token):
     def get_document_id():
         base_directory = "/home/cs6238/Desktop/Project4/client1/documents/checkin/"
         file_name = input("Please enter the file name: ")
-        file_path = os.path.join(base_directory, file_name)
+        file_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/client1/documents/checkin",
+            filename,
+        )
 
         if os.path.isfile(file_path):
             print("File found.")
