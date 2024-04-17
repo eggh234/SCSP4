@@ -133,18 +133,18 @@ def checkin(session_token):
             except ValueError:
                 print("Invalid input. Please use numeric values.")
 
-    security_flag = get_user_flag
-    body = {
-        "security_flag": security_flag,
-    }
+    security_flag = get_user_flag()
+    body = {"security_flag": security_flag}
     #     = os.listdir(client_checkin_file_path)
     # iterate on all files to move them to destination folder
     # for f in allfiles:
     #     src_path = os.path.join(client_checkin_file_path, f)
     #     dst_path = os.path.join(server_checkin_file1_path, f)
     #     os.rename(src_path, dst_path)
-
-    return
+    server_response = post_request(
+        server_name, "checkin", body, node_certificate, node_key
+    )
+    return server_response.json()
 
 
 def checkout(session_token):
