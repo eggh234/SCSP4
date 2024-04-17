@@ -91,6 +91,9 @@ class login(Resource):
 
 
 class checkin(Resource):
+    def post(self):
+        data = request.get_json()
+
     """
     Expected response status codes:
     1) 200 - Document Successfully checked in
@@ -131,6 +134,8 @@ class checkin(Resource):
     security_flag = data["security_flag"]
     filename = data["document_id"]
     client_file_data = data["file_data"]
+    print(security_flag)
+    print()
 
     server_checkin_file_path = os.path.join(
         "/home/cs6238/Desktop/Project4/server/application/documents", filename

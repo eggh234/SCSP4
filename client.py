@@ -122,72 +122,30 @@ def checkin(session_token):
     # if flag is 1 then encrypt with randomly generated key and store it in metadata while encrypted with servers public key
     # if flag is 2 then you create a signature for the file
     # server store the aes key inside the json file in documents folder
-    def get_user_flag():
-        while True:
-            try:
-                flag = int(
-                    input(
-                        "Please enter a flag (1 for confidentiality, 2 for integrity): "
-                    )
-                )
-                if flag in [1, 2]:
-                    return flag
-                else:
-                    print("Invalid input. Please enter either 1 or 2.")
-            except ValueError:
-                print("Invalid input. Please use numeric values.")
+    did = input("Enter DID (document ID/filename): ")
+    security_flag = int(
+        input("Enter security flag (1 for confidentiality, 2 for integrity): ")
+    )
+    file_path = (
+        "/home/cs6238/Desktop/Project4/client1/documents/checkin/" + did
+    )  # Adjust the path according to your setup
 
-    security_flag = get_user_flag()
+    # Prepare the file and metadata to be sent
+    with open(file_path, "r") as f:
+        file_data = f.read()
 
-    def get_document_id():
-        base_directory = "/home/cs6238/Desktop/Project4/client1/documents/checkin/"
-        file_name = input("Please enter the file name: ")
-        file_path = os.path.join(base_directory, file_name)
+        files = {"file": (did, file_data)}
+        body = {
+            "DID": did,
+            "security_flag": security_flag,
+            "token": session_token,
+            "file_data": file_data,
+        }
 
-        if os.path.isfile(file_path):
-            print("File found.")
-            return file_path  # Return the full path if file is found
-        else:
-            print(
-                f"File not found at {file_path}. Please check the filename and try again."
-            )
-            return None
-
-    def read_file_content(file_path):
-        """Reads file content into memory and returns it."""
-        try:
-            with open(file_path, "rb") as file:
-                file_data = file.read()
-            return file_data
-        except IOError as e:
-            print(f"Error reading file {file_path}: {e}")
-            return None
-
-    # Use the full path returned from get_document_id
-    file_path = get_document_id()
-
-    def read_file_content(file_path):
-        """Reads file content into a memory and returns it."""
-        try:
-            with open(file_path, "rb") as file:
-                file_data = file.read()
-            return file_data
-        except IOError as e:
-            print(f"Error reading file {file_path}: {e}")
-            return None
-
-    file_data = read_file_content()
-    body = {
-        "security_flag": security_flag,
-        "document_id": filename,
-        "file_data": file_data,
-    }
-
-    return None
-    # server_response = post_request(
-    #     server_name, "checkin", body, node_certificate, node_key
-    # )
-    # return server_response.json()
+        server_response = post_request(
+            server_name, "checkin", body, node_certificate, node_key
+        )
+        print(server_response.json())
 
 
 def checkout(session_token):
