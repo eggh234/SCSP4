@@ -1,5 +1,3 @@
-from flask import Flask, request, jsonify
-from flask_restful import Resource, Api
 from cryptography.hazmat.primitives import *
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -129,14 +127,22 @@ class checkin(Resource):
     # i have a servers private key and i want to sign a file at this location how do i do this GPT
     # ask for decryption methods as well for GPT for the checkout part
     def get_client_input():
+
         security_flag = data["security_flag"]
-        server_checkin_file1_path = (
-            "/home/cs6238/Desktop/Project4/server/application/documents/file1.txt"
+        filename = data["document_id"]
+
+        server_checkin_file_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/server/application/documents", filename
         )
         client_checkin_file_path = (
-            "/home/cs6238/Desktop/Project4/client1/documents/checkin/file1.txt"
+            "/home/cs6238/Desktop/Project4/client1/documents/checkin",
+            filename,
         )
-        json_metadata_path = "/home/cs6238/Desktop/Project4/server/application/documents/file1key.txt.json"
+        json_metadata_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/server/application/documents",
+            f"{filename}.json",
+        )
+
         if security_flag == 1:
             # Encrypt the file and generate key
             key = os.urandom(32)  # AES-256 key
@@ -150,7 +156,7 @@ class checkin(Resource):
             encrypted_data = encryptor.update(file_data) + encryptor.finalize()
 
             # Write the encrypted data to the server file
-            with open(server_checkin_file1_path, "wb") as file:
+            with open(server_checkin_file_path, "wb") as file:
                 file.write(iv + encrypted_data)  # Store IV with the data
 
             # Convert key to hexadecimal and store in JSON file

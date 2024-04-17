@@ -139,16 +139,11 @@ def checkin(session_token):
     filename = get_document_id()
     body = {"security_flag": 1, "document_id": filename}
 
-    #     = os.listdir(client_checkin_file_path)
-    # iterate on all files to move them to destination folder
-    # for f in allfiles:
-    #     src_path = os.path.join(client_checkin_file_path, f)
-    #     dst_path = os.path.join(server_checkin_file1_path, f)
-    #     os.rename(src_path, dst_path)
-    server_response = post_request(
-        server_name, "checkin", body, node_certificate, node_key
-    )
-    return server_response.json()
+    return None
+    # server_response = post_request(
+    #     server_name, "checkin", body, node_certificate, node_key
+    # )
+    # return server_response.json()
 
 
 def checkout(session_token):
