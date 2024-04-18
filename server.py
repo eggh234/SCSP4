@@ -173,6 +173,8 @@ class checkin(Resource):
         try:
             with open(client_checkin_file_path, "rb") as file:
                 file_data = file.read()
+                print("file data")
+                print(file_data)
         except IOError as e:
             print(f"Error reading file {client_checkin_file_path}: {e}")
             return

@@ -169,12 +169,12 @@ def checkin(session_token):
         "file_data": file_data,
         "token": session_token,
     }
+    server_response = post_request(
+        server_name, "checkin", body, node_certificate, node_key
+    )
+    return server_response.json()
 
-    return None
-    # server_response = post_request(
-    #     server_name, "checkin", body, node_certificate, node_key
-    # )
-    # return server_response.json()
+    # return None
 
 
 def checkout(session_token):
