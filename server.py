@@ -159,7 +159,9 @@ class checkin(Resource):
         # Ensure server directory exists
         os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
         os.makedirs(os.path.dirname(json_metadata_path), exist_ok=True)
-
+        print("path")
+        print(server_checkin_file_path)
+        print(client_checkin_file_path)
         # Initialize metadata JSON file
         if not os.path.exists(json_metadata_path):
             with open(json_metadata_path, "w") as file:

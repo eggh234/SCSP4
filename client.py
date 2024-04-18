@@ -130,6 +130,8 @@ def checkin(session_token):
                 input("Please enter a flag (1 for confidentiality, 2 for integrity): ")
             )
             if security_flag in [1, 2]:
+                print("security flag")
+                print(security_flag)
                 break
             else:
                 print("Invalid input. Please enter either 1 or 2.")
@@ -153,6 +155,10 @@ def checkin(session_token):
     try:
         with open(client_checkin_file_path, "rb") as file:
             file_data = file.read()
+            print("file path")
+            print(client_checkin_file_path)
+            print("file data")
+            print(file_data)
     except IOError as e:
         print(f"Error reading file {client_checkin_file_path}: {e}")
         return None
