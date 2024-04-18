@@ -195,10 +195,13 @@ def checkin(session_token):
             print(f"Error reading file {client_checkin_file_path}: {e}")
             return None
 
+        # Encode file_data with base64 before putting it into the body
+        encoded_file_data = base64.b64encode(file_data).decode("utf-8")
+
         body = {
             "security_flag": security_flag,
             "document_id": file_name,
-            "file_data": file_data,
+            "file_data": encoded_file_data,  # Use the encoded data here
             "token": session_token,
         }
 
