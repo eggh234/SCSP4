@@ -122,56 +122,46 @@ def checkin(session_token):
     # if flag is 1 then encrypt with randomly generated key and store it in metadata while encrypted with servers public key
     # if flag is 2 then you create a signature for the file
     # server store the aes key inside the json file in documents folder
-    def get_user_flag():
-        while True:
-            try:
-                flag = int(
-                    input(
-                        "Please enter a flag (1 for confidentiality, 2 for integrity): "
-                    )
-                )
-                if flag in [1, 2]:
-                    return flag
-                else:
-                    print("Invalid input. Please enter either 1 or 2.")
-            except ValueError:
-                print("Invalid input. Please use numeric values.")
 
-    security_flag = get_user_flag()
-
-    def get_document_id():
-        file_name = input("Please enter the file name: ")
-        file_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/client1/documents/checkin",
-            filename,
-        )
-
-        if os.path.isfile(file_path):
-            print("File found.")
-            return file_name
-        else:
-            print(
-                f"File not found at {file_path}. Please check the filename and try again."
-            )
-            return None
-
-    filename = get_document_id()
-
-    def read_file_content(file_path):
-        """Reads file content into a memory and returns it."""
+    # Get security flag from user
+    while True:
         try:
-            with open(file_path, "rb") as file:
-                file_data = file.read()
-            return file_data
-        except IOError as e:
-            print(f"Error reading file {file_path}: {e}")
-            return None
+            security_flag = int(
+                input("Please enter a flag (1 for confidentiality, 2 for integrity): ")
+            )
+            if security_flag in [1, 2]:
+                break
+            else:
+                print("Invalid input. Please enter either 1 or 2.")
+        except ValueError:
+            print("Invalid input. Please use numeric values.")
 
-    file_data = read_file_content()
+    # Get document ID from user
+    file_name = input("Please enter the file name: ")
+    client_checkin_file_path = os.path.join(
+        "/home/cs6238/Desktop/Project4/client1/documents/checkin",
+        file_name,
+    )
+
+    if not os.path.isfile(client_checkin_file_path):
+        print(
+            f"File not found at {client_checkin_file_path}. Please check the filename and try again."
+        )
+        return None
+
+    # Read file content
+    try:
+        with open(client_checkin_file_path, "rb") as file:
+            file_data = file.read()
+    except IOError as e:
+        print(f"Error reading file {client_checkin_file_path}: {e}")
+        return None
+
     body = {
         "security_flag": security_flag,
-        "document_id": filename,
+        "document_id": file_name,
         "file_data": file_data,
+        "token": session_token,
     }
 
     return None
