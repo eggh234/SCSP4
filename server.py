@@ -90,10 +90,7 @@ class login(Resource):
         return jsonify(response)
 
 
-class checkin(Resource):
-    def post(self):
-        data = request.get_json()
-
+class Checkin(Resource):
     """
     Expected response status codes:
     1) 200 - Document Successfully checked in
@@ -101,107 +98,67 @@ class checkin(Resource):
     3) 700 - Other failures
     """
 
-    # make checkin randomly generated tokens
-    # make a metadata file
-    # metadata = {
-    # client side             'doc_id': doc_id,
-    #             'owner': owner,
-    # client side             'security_flag': security_flag,
-    #             'grant_user':"",
-    #             'grant_token' : "",
-    #             'grant_access' : "",
-    #             'aes_key' : ""
+    def post(self):
+        data = request.get_json()
+        security_flag = data.get("security_flag")
+        filename = data.get("document_id")
+        client_file_data = data.get("file_data")
 
-    #         }
-    # ask client for file path to file1 or file2
-    # open the file
-    # make a body request
-    # send it to the server including DID security flag and token
+        server_checkin_file_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/server/application/documents", filename
+        )
+        json_metadata_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/server/application/documents",
+            f"{filename}.json",
+        )
 
-    # on server side
-    # generate a Key with AES GPT this part
-    # encrypt the file1 or file 2 with the AES key and maintain the key in the metadata in the server side
-    # confidentiaity
-
-    # integrity
-    # sign the file with the key
-    # when client requests file you sign it with the servers private key
-    # create a .sign folder
-    # use the .sign and the normal
-    # i have a servers private key and i want to sign a file at this location how do i do this GPT
-    # ask for decryption methods as well for GPT for the checkout part
-
-    security_flag = data["security_flag"]
-    filename = data["document_id"]
-    client_file_data = data["file_data"]
-    print(security_flag)
-    print()
-
-    server_checkin_file_path = os.path.join(
-        "/home/cs6238/Desktop/Project4/server/application/documents", filename
-    )
-    client_checkin_file_path = os.path.join(
-        "/home/cs6238/Desktop/Project4/client1/documents/checkin",
-        filename,
-    )
-    json_metadata_path = os.path.join(
-        "/home/cs6238/Desktop/Project4/server/application/documents",
-        f"{filename}.json",
-    )
-
-    # Ensure the directory exists before creating files
-    def handle_file_checkin(
-        client_checkin_file_path,
-        server_checkin_file_path,
-        json_metadata_path,
-        security_flag,
-    ):
-        # Ensure server directory exists
+        # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
         os.makedirs(os.path.dirname(json_metadata_path), exist_ok=True)
-        print("path")
-        print(server_checkin_file_path)
-        print(client_checkin_file_path)
-        # Initialize metadata JSON file
-        if not os.path.exists(json_metadata_path):
-            with open(json_metadata_path, "w") as file:
-                json.dump(
-                    {}, file
-                )  # Create an empty JSON object if file does not exist
 
-        # Read file content on the client side
-        try:
-            with open(client_checkin_file_path, "rb") as file:
-                file_data = file.read()
-                print("file data")
+        # Check if the server file exists, if not, create it and write client data
+        if not os.path.exists(server_checkin_file_path):
+            try:
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(
+                        client_file_data.encode()
+                    )  # Assume client_file_data is a string
+                print(
+                    f"New file created and data written to {server_checkin_file_path}"
+                )
+            except IOError as e:
+                print(f"Error writing file {server_checkin_file_path}: {e}")
+                return
+        else:
+            try:
+                with open(server_checkin_file_path, "rb") as file:
+                    file_data = file.read()
+                print("Existing file data on server:")
                 print(file_data)
-        except IOError as e:
-            print(f"Error reading file {client_checkin_file_path}: {e}")
-            return
+            except IOError as e:
+                print(f"Error reading file {server_checkin_file_path}: {e}")
+                return
 
         if security_flag == 1:
-            # Encrypt the file and generate key
             key = os.urandom(32)  # AES-256 key
             iv = os.urandom(16)  # Initialization vector for AES
             cipher = Cipher(
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
             encryptor = cipher.encryptor()
-            with open(client_checkin_file_path, "rb") as file:
-                file_data = file.read()
             encrypted_data = encryptor.update(file_data) + encryptor.finalize()
 
             # Write the encrypted data to the server file
             with open(server_checkin_file_path, "wb") as file:
                 file.write(iv + encrypted_data)  # Store IV with the data
 
-            # Convert key to hexadecimal and store in JSON file
+            # Convert key to hexadecimal and store in JSON metadata file
             metadata = {"key": key.hex(), "iv": iv.hex()}
             with open(json_metadata_path, "w") as json_file:
                 json.dump(metadata, json_file)
-            print("File successfully encrypted.")
+            print("File successfully encrypted and stored.")
         else:
-            print(security_flag)
+            print(f"Security flag is not set for encryption: {security_flag}")
 
     def post(self):
         data = request.get_json()

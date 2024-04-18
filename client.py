@@ -122,56 +122,100 @@ def checkin(session_token):
     # if flag is 1 then encrypt with randomly generated key and store it in metadata while encrypted with servers public key
     # if flag is 2 then you create a signature for the file
     # server store the aes key inside the json file in documents folder
+    # make checkin randomly generated tokens
+    # make a metadata file
+    # metadata = {
+    # client side             'doc_id': doc_id,
+    #             'owner': owner,
+    # client side             'security_flag': security_flag,
+    #             'grant_user':"",
+    #             'grant_token' : "",
+    #             'grant_access' : "",
+    #             'aes_key' : ""
 
-    # Get security flag from user
-    while True:
-        try:
-            security_flag = int(
-                input("Please enter a flag (1 for confidentiality, 2 for integrity): ")
-            )
-            if security_flag in [1, 2]:
-                print("security flag")
-                print(security_flag)
-                break
-            else:
-                print("Invalid input. Please enter either 1 or 2.")
-        except ValueError:
-            print("Invalid input. Please use numeric values.")
+    #         }
+    # ask client for file path to file1 or file2
+    # open the file
+    # make a body request
+    # send it to the server including DID security flag and token
 
-    # Get document ID from user
-    file_name = input("Please enter the file name: ")
-    client_checkin_file_path = os.path.join(
-        "/home/cs6238/Desktop/Project4/client1/documents/checkin",
-        file_name,
-    )
+    # on server side
+    # generate a Key with AES GPT this part
+    # encrypt the file1 or file 2 with the AES key and maintain the key in the metadata in the server side
+    # confidentiaity
 
-    if not os.path.isfile(client_checkin_file_path):
-        print(
-            f"File not found at {client_checkin_file_path}. Please check the filename and try again."
+    # integrity
+    # sign the file with the key
+    # when client requests file you sign it with the servers private key
+    # create a .sign folder
+    # use the .sign and the normal
+    # i have a servers private key and i want to sign a file at this location how do i do this GPT
+    # ask for decryption methods as well for GPT for the checkout part
+    successful_checkin = False
+    while not successful_checkin:
+        # Get security flag from user
+        while True:
+            try:
+                security_flag = int(
+                    input(
+                        "Please enter a flag (1 for confidentiality, 2 for integrity): "
+                    )
+                )
+                if security_flag in [1, 2]:
+                    print("security flag")
+                    print(security_flag)
+                    break
+                else:
+                    print("Invalid input. Please enter either 1 or 2.")
+            except ValueError:
+                print("Invalid input. Please use numeric values.")
+
+        # Get document ID from user
+        file_name = input("Please enter the file name: ")
+        client_checkin_file_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/client1/documents/checkin",
+            file_name,
         )
-        return None
 
-    # Read file content
-    try:
-        with open(client_checkin_file_path, "rb") as file:
-            file_data = file.read()
-            print("file path")
-            print(client_checkin_file_path)
-            print("file data")
-            print(file_data)
-    except IOError as e:
-        print(f"Error reading file {client_checkin_file_path}: {e}")
-        return None
+        if not os.path.isfile(client_checkin_file_path):
+            print(
+                f"File not found at {client_checkin_file_path}. Please check the filename and try again."
+            )
+            return None
 
-    body = {
-        "security_flag": security_flag,
-        "document_id": file_name,
-        "file_data": file_data,
-        "token": session_token,
-    }
-    server_response = post_request(
-        server_name, "checkin", body, node_certificate, node_key
-    )
+        # Read file content
+        try:
+            with open(client_checkin_file_path, "rb") as file:
+                file_data = file.read()
+                print("file path")
+                print(client_checkin_file_path)
+                print("file data")
+                print(file_data)
+        except IOError as e:
+            print(f"Error reading file {client_checkin_file_path}: {e}")
+            return None
+
+        body = {
+            "security_flag": security_flag,
+            "document_id": file_name,
+            "file_data": file_data,
+            "token": session_token,
+        }
+
+        server_response = post_request(
+            server_name, "checkin", body, node_certificate, node_key
+        )
+
+        if server_response.json().get("status") == 200:
+            print("Document Successfully checked in")
+            successful_checkin = True
+
+        elif server_response.json().get("status") == 702:
+            print("Access denied checking in")
+
+        elif server_response.json().get("status") == 700:
+            print("Other failures")
+
     return server_response.json()
 
     # return None
