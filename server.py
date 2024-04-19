@@ -213,7 +213,7 @@ class checkin(Resource):
                     "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
                 )
                 aes_metadata_path = os.path.join(
-                    server_document_folder, "_AES_Key.txt.json"
+                    server_document_folder, filename + "_AES_Key.txt.json"
                 )
 
                 # Encrypt the file with the server's public key
@@ -318,6 +318,8 @@ class checkout(Resource):
         aes_metadata_path = os.path.join(
             server_document_folder, filename + "_AES_Key.txt.json"
         )
+        print("aes path")
+        print(aes_metadata_path)
         client_file_path = os.path.join(
             "/home/cs6238/Desktop/Project4/client1/documents/checkout", filename
         )
