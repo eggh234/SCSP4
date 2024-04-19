@@ -115,9 +115,6 @@ class checkin(Resource):
         aes_metadata_path = os.path.join(
             server_document_folder, filename + "_AES_Key.txt.json"
         )
-        server_public_key_path = (
-            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
-        )
         server_private_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
         )
@@ -215,17 +212,20 @@ class checkin(Resource):
                         sign_file.write(signature)
                     print(f"Signature created and stored at {signature_file_path}")
 
-                    return {
+                    response = {
                         "status": 200,
                         "message": "Document successfully signed and signature file created",
                     }, 200
                 else:
                     print("Error: Original file not found for signing.")
-                    return {"status": 704, "message": "Original file not found"}, 704
+                    response = {
+                        "status": 704,
+                        "message": "Original file not found",
+                    }, 704
 
             except Exception as e:
                 print(f"An exception occurred: {e}")
-                return {"status": 700, "message": "Signature process failed"}, 700
+                response = {"status": 700, "message": "Signature process failed"}, 700
 
         if success:
             response = {
@@ -278,10 +278,10 @@ class checkout(Resource):
 
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
-            return {"status": 704, "message": "File not found on the server"}, 704
+            response = {"status": 704, "message": "File not found on the server"}, 704
 
         if not os.path.isfile(aes_metadata_path):
-            return {"status": 704, "message": "Encryption metadata not found"}, 704
+            response = {"status": 704, "message": "Encryption metadata not found"}, 704
 
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:
@@ -289,7 +289,7 @@ class checkout(Resource):
 
         # Verify user ID
         if aes_metadata["user_id"] != user_id:
-            return {"status": 702, "message": "Access denied"}, 702
+            response = {"status": 702, "message": "Access denied"}, 702
 
         # Read the security flag from the metadata
         security_flag = aes_metadata.get("security_flag", 0)
@@ -314,14 +314,17 @@ class checkout(Resource):
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
 
-            return {"status": 200, "message": "Document successfully checked out"}, 200
+            response = {
+                "status": 200,
+                "message": "Document successfully checked out",
+            }, 200
 
         elif security_flag == 2:
             # Verify integrity with the signature
             signed_file_path = os.path.join(server_document_folder, filename + ".sign")
             if not os.path.isfile(signed_file_path):
                 print("Signature file not found")
-                return {"status": 704, "message": "Signature file not found"}, 704
+                response = {"status": 704, "message": "Signature file not found"}, 704
 
             # Read the signature
             with open(signed_file_path, "rb") as sign_file:
@@ -356,17 +359,19 @@ class checkout(Resource):
                     client_file.write(encrypted_data)
                 print("Encrypted file copied to client path")
 
-                return {
+                response = {
                     "status": 200,
                     "message": "Document successfully checked out and signature verified",
-                }, 200
+                }
 
             except cryptography.exceptions.InvalidSignature:
                 print("Invalid signature")
-                return {"status": 703, "message": "Invalid signature"}, 703
+                return {"status": 703, "message": "Invalid signature"}
             except Exception as e:
                 print(f"An exception occurred during signature verification: {e}")
-                return {"status": 700, "message": "Signature verification failed"}, 700
+                response = {"status": 700, "message": "Signature verification failed"}
+
+        return jsonify(response)
 
 
 class grant(Resource):
