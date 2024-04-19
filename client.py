@@ -153,73 +153,63 @@ def checkin(session_token):
     # use the .sign and the normal
     # i have a servers private key and i want to sign a file at this location
     # get decryption methods
-    successful_checkin = False
-    while not successful_checkin:
-        # Get security flag from user
-        while True:
-            try:
-                security_flag = int(
-                    input(
-                        "Please enter a flag (1 for confidentiality, 2 for integrity): "
-                    )
-                )
-                if security_flag in [1, 2]:
-                    print("security flag")
-                    print(security_flag)
-                    break
-                else:
-                    print("Invalid input. Please enter either 1 or 2.")
-            except ValueError:
-                print("Invalid input. Please use numeric values.")
 
-        # Get document ID from user
-        file_name = input("Please enter the file name: ")
-        client_checkin_file_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/client1/documents/checkin",
-            file_name,
+    try:
+        security_flag = int(
+            input("Please enter a flag (1 for confidentiality, 2 for integrity): ")
         )
+        if security_flag not in [1, 2]:
+            print("Invalid input. Please enter either 1 or 2.")
+            exit()
+    except ValueError:
+        print("Invalid input. Please use numeric values.")
+        exit()
 
-        if not os.path.isfile(client_checkin_file_path):
-            print(
-                f"File not found at {client_checkin_file_path}. Please check the filename and try again."
-            )
-            return None
+    print("Security flag:", security_flag)
 
-        # Read file content
-        try:
-            with open(client_checkin_file_path, "rb") as file:
-                file_data = file.read()
-                print("file path")
-                print(client_checkin_file_path)
-                print("file data")
-                print(file_data)
-        except IOError as e:
-            print(f"Error reading file {client_checkin_file_path}: {e}")
-            return None
+    # Get document ID from user
+    file_name = input("Please enter the file name: ")
+    client_checkin_file_path = os.path.join(
+        "/home/cs6238/Desktop/Project4/client1/documents/checkin",
+        file_name,
+    )
 
-        # Encode file_data with base64 before putting it into the body
-        encoded_file_data = base64.b64encode(file_data).decode("utf-8")
-
-        body = {
-            "security_flag": security_flag,
-            "document_id": file_name,
-            "file_data": encoded_file_data,
-            "token": session_token,
-        }
-
-        server_response = post_request(
-            server_name, "checkin", body, node_certificate, node_key
+    if not os.path.isfile(client_checkin_file_path):
+        print(
+            f"File not found at {client_checkin_file_path}. Please check the filename and try again."
         )
+        exit()
 
-        if server_response.json().get("status") == 200:
-            print("Document Successfully checked in")
-            successful_checkin = True
+    # Read file content
+    try:
+        with open(client_checkin_file_path, "rb") as file:
+            file_data = file.read()
+    except IOError as e:
+        print(f"Error reading file {client_checkin_file_path}: {e}")
+        exit()
 
-        elif server_response.json().get("status") == 702:
-            print("Access denied checking in")
+    # Encode file_data with base64 before putting it into the body
+    encoded_file_data = base64.b64encode(file_data).decode("utf-8")
 
-        elif server_response.json().get("status") == 700:
-            print("Other failures")
+    body = {
+        "security_flag": security_flag,
+        "document_id": file_name,
+        "file_data": encoded_file_data,
+        "token": session_token,  # Assuming session_token is defined elsewhere
+    }
+
+    server_response = post_request(
+        server_name,
+        "checkin",
+        body,
+        node_certificate,
+        node_key,  # Assuming these variables are defined
+    )
+
+    if server_response.json().get("status") == 200:
+        print("Document Successfully checked in")
+    elif server_response.json().get("status") == 702:
+        print("Access denied checking in")
 
     return server_response.json()
 

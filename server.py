@@ -99,7 +99,6 @@ class checkin(Resource):
     Expected response status codes:
     1) 200 - Document Successfully checked in
     2) 702 - Access denied checking in
-    3) 700 - Other failures
     """
 
     def post(self):
@@ -107,132 +106,197 @@ class checkin(Resource):
         security_flag = data.get("security_flag")
         filename = data.get("document_id")
         client_file_data = data.get("file_data")
-
-        server_checkin_file_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/server/application/documents", filename
-        )
-        json_metadata_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/server/application/documents",
-            f"{filename}.json",
-        )
-
-        server_key_path = (
-            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
-        )
-        signed_file_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/server/application/documents",
-            f"{filename}.sign",
-        )
-
-        os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
-        os.makedirs(os.path.dirname(json_metadata_path), exist_ok=True)
-
-        if not os.path.exists(server_checkin_file_path):
-            try:
-                with open(server_checkin_file_path, "wb") as file:
-                    file.write(client_file_data.encode())
-                print(
-                    f"New file created and data written to {server_checkin_file_path}"
-                )
-            except IOError as e:
-                print(f"Error writing file {server_checkin_file_path}: {e}")
-                return
+        response = {}
 
         if security_flag == 1:
-            key = os.urandom(32)  # AES-256 key
-            iv = os.urandom(16)  # Initialization vector for AES
-            cipher = Cipher(
-                algorithms.AES(key), modes.CFB(iv), backend=default_backend()
-            )
-            encryptor = cipher.encryptor()
-            encrypted_data = (
-                encryptor.update(client_file_data.encode()) + encryptor.finalize()
-            )
+            try:
+                server_document_folder = (
+                    "/home/cs6238/Desktop/Project4/server/application/documents"
+                )
+                server_checkin_file_path = os.path.join(
+                    server_document_folder, filename
+                )
+                aes_metadata_path = os.path.join(
+                    server_document_folder, "AESkey.json.txt"
+                )
+                server_public_key_path = (
+                    "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
+                )
+                server_private_key_path = (
+                    "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
+                )
 
-            with open(server_checkin_file_path, "wb") as file:
-                file.write(iv + encrypted_data)
+                # Ensure the directory exists before creating files
+                os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
-            metadata = {"key": key.hex(), "iv": iv.hex()}
-            with open(json_metadata_path, "w") as json_file:
-                json.dump(metadata, json_file)
-            print("File successfully encrypted and stored.")
+                # Check if the file exists, if not, create it
+                if not os.path.isfile(server_checkin_file_path):
+                    with open(server_checkin_file_path, "wb") as file:
+                        file.write(client_file_data.encode())
+                    print(f"New file created at {server_checkin_file_path}")
 
-            response = {
-                "status": 200,
-                "message": "Document Successfully checked in",
-            }
+                # Encrypt the file with the server's public key
+                with open(server_public_key_path, "rb") as key_file:
+                    public_key = serialization.load_pem_public_key(
+                        key_file.read(), backend=default_backend()
+                    )
 
-            with open(server_key_path, "rb") as key_file:
-                private_key = serialization.load_pem_private_key(
-                    key_file.read(),
-                    password=None,  # Replace with the password if the key is encrypted
+                encrypted_file_data = public_key.encrypt(
+                    client_file_data.encode(),
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None,
+                    ),
+                )
+
+                # Write the encrypted file data to the server file
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(encrypted_file_data)
+                print(f"File {filename} encrypted with the server's public key.")
+
+                # Generate an AES key and IV for encrypting the server's private key
+                aes_key = os.urandom(32)  # AES-256 key
+                aes_iv = os.urandom(16)  # Initialization vector for AES
+                cipher = Cipher(
+                    algorithms.AES(aes_key),
+                    modes.CFB(aes_iv),
                     backend=default_backend(),
                 )
+                encryptor = cipher.encryptor()
 
-            # Sign file code start
-            # Read the content of the file to be signed
-            with open(server_checkin_file_path, "rb") as f:
-                file_data = f.read()
+                # Load and encrypt the server's private key
+                with open(server_private_key_path, "rb") as key_file:
+                    private_key_data = key_file.read()
 
-            # Sign the data of the file
-            signature = private_key.sign(
-                file_data,
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH,
-                ),
-                hashes.SHA256(),
-            )
-
-            # Write the signature to a .sign file
-            with open(signed_file_path, "wb") as sign_file:
-                sign_file.write(signature)
-
-            print(
-                f"File {filename} has been signed. Signature stored at {signed_file_path}."
-            )
-
-        elif security_flag == 2:
-            # Load the public key
-            with open(server_key_path, "rb") as key_file:
-                public_key = load_pem_public_key(
-                    key_file.read(), backend=default_backend()
+                encrypted_private_key_data = (
+                    encryptor.update(private_key_data) + encryptor.finalize()
                 )
 
-            # Read the document to verify
-            with open(server_checkin_file_path, "rb") as file:
-                document_data = file.read()
+                # Store AES key, IV, and encrypted private key in the metadata file
+                aes_metadata = {
+                    "aes_key": base64.b64encode(aes_key).decode("utf-8"),
+                    "iv": base64.b64encode(aes_iv).decode("utf-8"),
+                    "encrypted_private_key": base64.b64encode(
+                        encrypted_private_key_data
+                    ).decode("utf-8"),
+                }
+                with open(aes_metadata_path, "w") as json_file:
+                    json.dump(aes_metadata, json_file)
+                print(
+                    f"AES key and encrypted server private key stored in {aes_metadata_path}"
+                )
 
-            # Read the signature from the .sign file
-            with open(signed_file_path, "rb") as sign_file:
-                signature = sign_file.read()
+                # If all operations complete successfully, set success to True
+                success = True
 
-            # Verify the signature
+            except Exception as e:
+                print(f"An exception occurred: {e}")
+                success = False
+
+        elif security_flag == 2:
             try:
-                public_key.verify(
-                    signature,
-                    document_data,
+                # Path setup
+                server_document_folder = (
+                    "/home/cs6238/Desktop/Project4/server/application/documents"
+                )
+                server_checkin_file_path = os.path.join(
+                    server_document_folder, filename
+                )
+                server_public_key_path = (
+                    "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
+                )
+                server_private_key_path = (
+                    "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
+                )
+                aes_metadata_path = os.path.join(
+                    server_document_folder, "AESkey.json.txt"
+                )
+                signature_file_path = f"{server_checkin_file_path}.sign"
+
+                # Ensure the directory exists before creating files
+                os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
+
+                # Encrypt the file with the server's public key
+                with open(server_public_key_path, "rb") as key_file:
+                    public_key = serialization.load_pem_public_key(
+                        key_file.read(), backend=default_backend()
+                    )
+
+                encrypted_file_data = public_key.encrypt(
+                    client_file_data.encode(),
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None,
+                    ),
+                )
+
+                # Write the encrypted file data to the server file
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(encrypted_file_data)
+                print(f"File {filename} encrypted with the server's public key.")
+
+                # Generate an AES key and IV for encrypting the server's private key
+                aes_key = os.urandom(32)  # AES-256 key
+                aes_iv = os.urandom(16)  # Initialization vector for AES
+                cipher = Cipher(
+                    algorithms.AES(aes_key),
+                    modes.CFB(aes_iv),
+                    backend=default_backend(),
+                )
+                encryptor = cipher.encryptor()
+
+                # Load and encrypt the server's private key
+                with open(server_private_key_path, "rb") as key_file:
+                    private_key_data = key_file.read()
+
+                encrypted_private_key_data = (
+                    encryptor.update(private_key_data) + encryptor.finalize()
+                )
+
+                # Store AES key, IV, and encrypted private key in the metadata file
+                aes_metadata = {
+                    "aes_key": base64.b64encode(aes_key).decode("utf-8"),
+                    "iv": base64.b64encode(aes_iv).decode("utf-8"),
+                    "encrypted_private_key": base64.b64encode(
+                        encrypted_private_key_data
+                    ).decode("utf-8"),
+                }
+                with open(aes_metadata_path, "w") as json_file:
+                    json.dump(aes_metadata, json_file)
+                print(
+                    f"AES key and encrypted server private key stored in {aes_metadata_path}"
+                )
+
+                # Sign the encrypted file with the server's private key
+                with open(server_private_key_path, "rb") as key_file:
+                    private_key = serialization.load_pem_private_key(
+                        key_file.read(), password=None, backend=default_backend()
+                    )
+
+                signer = private_key.signer(
                     padding.PSS(
                         mgf=padding.MGF1(hashes.SHA256()),
                         salt_length=padding.PSS.MAX_LENGTH,
                     ),
                     hashes.SHA256(),
                 )
-                print("Verification successful: The signature is valid.")
-            except cryptography.exceptions.InvalidSignature:
-                print("Verification failed: The signature is not valid.")
+
+                signer.update(encrypted_file_data)
+                signature = signer.finalize()
+
+                # Write the signature to a separate file
+                with open(signature_file_path, "wb") as sign_file:
+                    sign_file.write(signature)
+                print(f"Signature for {filename} stored in {signature_file_path}")
+
+                success = True
+
             except Exception as e:
-                print(f"An error occurred during the verification process: {e}")
+                print(f"An exception occurred: {e}")
+                success = False
 
-        return jsonify(response)
-
-    print("Unidentified Input")
-
-    def post(self):
-        data = request.get_json()
-        token = data["token"]
-
-        success = False
         if success:
             response = {
                 "status": 200,
@@ -243,6 +307,7 @@ class checkin(Resource):
                 "status": 702,
                 "message": "Access denied checking in",
             }
+
         return jsonify(response)
 
 
