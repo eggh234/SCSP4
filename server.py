@@ -213,7 +213,7 @@ class checkin(Resource):
                     "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
                 )
                 aes_metadata_path = os.path.join(
-                    server_document_folder, "AESkey.json.txt"
+                    server_document_folder, "_AES_Key.txt.json"
                 )
 
                 # Encrypt the file with the server's public key
@@ -314,21 +314,24 @@ class checkout(Resource):
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
-        server_checkin_file_path = os.path.join(server_document_folder, filename)
-        aes_metadata_path = os.path.join(server_document_folder, "aeskey.json.txt")
+        server_checkout_file_path = os.path.join(server_document_folder, filename)
+        aes_metadata_path = os.path.join(
+            server_document_folder, filename + "_AES_Key.txt.json"
+        )
         client_file_path = os.path.join(
             "/home/cs6238/Desktop/Project4/client1/documents/checkout", filename
         )
         signed_file_path = os.path.join(server_document_folder, f"{filename}.sign")
 
         # Checks for the existence of the necessary files
-        if not os.path.isfile(server_checkin_file_path):
+        if not os.path.isfile(server_checkout_file_path):
             return (
                 ({"status": 704, "message": "File not found on the server"}),
                 704,
             )
 
         if not os.path.isfile(aes_metadata_path):
+            print("file not found")
             return (
                 ({"status": 700, "message": "Encryption metadata not found"}),
                 700,
@@ -352,7 +355,7 @@ class checkout(Resource):
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
             decryptor = cipher.decryptor()
-            with open(server_checkin_file_path, "rb") as enc_file:
+            with open(server_checkout_file_path, "rb") as enc_file:
                 encrypted_data = enc_file.read()
             decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
             with open(client_file_path, "wb") as file:
@@ -382,7 +385,7 @@ class checkout(Resource):
                 )
             print("open public key")
             # Read the encrypted data
-            with open(server_checkin_file_path, "rb") as file:
+            with open(server_checkout_file_path, "rb") as file:
                 encrypted_data = file.read()
 
             # Read the signature
@@ -434,7 +437,7 @@ class checkout(Resource):
 
         else:
             # Handle unexpected security_flag values
-            return ({"status": 700, "message": "Other Failures"}), 700
+            return ({"status": 700, "message": "Ending failure"}), 700
 
 
 class grant(Resource):
