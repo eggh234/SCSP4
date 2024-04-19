@@ -213,16 +213,6 @@ class checkin(Resource):
                 aes_metadata_path = os.path.join(
                     server_document_folder, "AESkey.json.txt"
                 )
-                signature_file_path = f"{server_checkin_file_path}.sign"
-
-                # Ensure the directory exists before creating files
-                os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
-
-                # Check if the file exists, if not, create it
-                if not os.path.isfile(server_checkin_file_path):
-                    with open(server_checkin_file_path, "wb") as file:
-                        file.write(client_file_data.encode())
-                    print(f"New file created at {server_checkin_file_path}")
 
                 # Encrypt the file with the server's public key
                 with open(server_public_key_path, "rb") as key_file:
@@ -246,7 +236,9 @@ class checkin(Resource):
                 # Sign the encrypted file with the server's private key
                 with open(server_private_key_path, "rb") as key_file:
                     private_key = serialization.load_pem_private_key(
-                        key_file.read(), password=None, backend=default_backend()
+                        key_file.read(),
+                        password=None,  # Replace with the private key password if needed
+                        backend=default_backend(),
                     )
 
                 signature = private_key.sign(
@@ -263,60 +255,18 @@ class checkin(Resource):
                 with open(signature_file_path, "wb") as sign_file:
                     sign_file.write(signature)
 
-                # Generate an AES key and IV for encrypting the server's private key
+                # Generate an AES key and IV for future operations
                 aes_key = os.urandom(32)  # AES-256 key
                 aes_iv = os.urandom(16)  # Initialization vector for AES
-                cipher = Cipher(
-                    algorithms.AES(aes_key),
-                    modes.CFB(aes_iv),
-                    backend=default_backend(),
-                )
-                encryptor = cipher.encryptor()
 
-                # Load and encrypt the server's private key
-                with open(server_private_key_path, "rb") as key_file:
-                    private_key_data = key_file.read()
-
-                encrypted_private_key_data = (
-                    encryptor.update(private_key_data) + encryptor.finalize()
-                )
-
-                # Store AES key, IV, encrypted private key, and security flag in the metadata file
+                # Store AES key, IV, and security flag in the metadata file
                 aes_metadata = {
                     "aes_key": base64.b64encode(aes_key).decode("utf-8"),
                     "iv": base64.b64encode(aes_iv).decode("utf-8"),
-                    "encrypted_private_key": base64.b64encode(
-                        encrypted_private_key_data
-                    ).decode("utf-8"),
                     "security_flag": security_flag,  # Storing the security flag
                 }
                 with open(aes_metadata_path, "w") as json_file:
                     json.dump(aes_metadata, json_file)
-                print(
-                    f"AES key, encrypted server private key, and security flag stored in {aes_metadata_path}"
-                )
-
-                # Sign the encrypted file with the server's private key
-                with open(server_private_key_path, "rb") as key_file:
-                    private_key = serialization.load_pem_private_key(
-                        key_file.read(), password=None, backend=default_backend()
-                    )
-
-                signer = private_key.signer(
-                    padding.PSS(
-                        mgf=padding.MGF1(hashes.SHA256()),
-                        salt_length=padding.PSS.MAX_LENGTH,
-                    ),
-                    hashes.SHA256(),
-                )
-
-                signer.update(encrypted_file_data)
-                signature = signer.finalize()
-
-                # Write the signature to a separate file
-                with open(signature_file_path, "wb") as sign_file:
-                    sign_file.write(signature)
-                print(f"Signature for {filename} stored in {signature_file_path}")
 
                 success = True
 
