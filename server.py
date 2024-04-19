@@ -336,6 +336,7 @@ class checkout(Resource):
 
         # Process based on the security flag
         if security_flag == 1:
+            print("flag1")
             # Just decrypt and copy the data to the client's checkout path
             cipher = Cipher(
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
@@ -352,8 +353,10 @@ class checkout(Resource):
             )
 
         elif security_flag == 2:
+            print("flag2")
             # Verify integrity and decrypt
             if not os.path.isfile(signed_file_path):
+                print("check signed file path")
                 return (
                     ({"status": 700, "message": "Signature file not found"}),
                     700,
@@ -367,7 +370,7 @@ class checkout(Resource):
                 public_key = load_pem_public_key(
                     key_file.read(), backend=default_backend()
                 )
-
+            print("open public key")
             # Read the encrypted data
             with open(server_checkin_file_path, "rb") as file:
                 encrypted_data = file.read()
@@ -387,6 +390,7 @@ class checkout(Resource):
                     ),
                     hashes.SHA256(),
                 )
+                print("verify signature")
             except cryptography.exceptions.InvalidSignature:
                 return (
                     (
