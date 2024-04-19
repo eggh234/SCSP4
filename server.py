@@ -267,6 +267,8 @@ class checkout(Resource):
         signed_file_path = filename + ".sign"
 
         # Checks for the existence of the necessary files
+        print(server_checkout_file_path)
+        print(os.path)
         if not os.path.isfile(server_checkout_file_path):
             return {"status": 704, "message": "File not found on the server"}, 704
 
