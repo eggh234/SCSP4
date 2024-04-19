@@ -129,11 +129,11 @@ class checkin(Resource):
                 # Ensure the directory exists before creating files
                 os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
-                # Check if the file exists, if not, create it
-                if not os.path.isfile(server_checkin_file_path):
-                    with open(server_checkin_file_path, "wb") as file:
-                        file.write(client_file_data.encode())
-                    print(f"New file created at {server_checkin_file_path}")
+                # Write or overwrite the file with the provided data
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(client_file_data.encode())  # Ensure client_file_data is a string. If it's already bytes, remove .encode()
+
+                print(f"File created (or overwritten) at {server_checkin_file_path}")
 
                 # Encrypt the file with the server's public key
                 with open(server_public_key_path, "rb") as key_file:
