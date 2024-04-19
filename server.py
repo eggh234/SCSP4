@@ -311,15 +311,14 @@ class checkout(Resource):
         )
         signed_file_path = os.path.join(server_document_folder, f"{filename}.sign")
 
-        # Ensure encrypted data file exists
-        if not os.path.exists(server_checkin_file_path):
+        # Checks for the existence of the necessary files
+        if not os.path.isfile(server_checkin_file_path):
             return (
                 jsonify({"status": 704, "message": "File not found on the server"}),
                 704,
             )
 
-        # Ensure AES metadata exists
-        if not os.path.exists(aes_metadata_path):
+        if not os.path.isfile(aes_metadata_path):
             return (
                 jsonify({"status": 700, "message": "Encryption metadata not found"}),
                 700,
@@ -333,7 +332,9 @@ class checkout(Resource):
         iv = base64.b64decode(aes_metadata["iv"])
         security_flag = aes_metadata.get("security_flag")
 
+        # Process based on the security flag
         if security_flag == 1:
+            # Just decrypt and copy the data to the client's checkout path
             cipher = Cipher(
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
@@ -351,12 +352,14 @@ class checkout(Resource):
             )
 
         elif security_flag == 2:
-            if not os.path.exists(signed_file_path):
+            # Verify integrity and decrypt
+            if not os.path.isfile(signed_file_path):
                 return (
                     jsonify({"status": 700, "message": "Signature file not found"}),
                     700,
                 )
 
+            # Load the public key for verification
             with open(
                 "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub",
                 "rb",
@@ -364,11 +367,16 @@ class checkout(Resource):
                 public_key = load_pem_public_key(
                     key_file.read(), backend=default_backend()
                 )
+
+            # Read the encrypted data
             with open(server_checkin_file_path, "rb") as file:
                 encrypted_data = file.read()
+
+            # Read the signature
             with open(signed_file_path, "rb") as sign_file:
                 signature = sign_file.read()
 
+            # Verify the signature
             try:
                 public_key.verify(
                     signature,
@@ -397,13 +405,14 @@ class checkout(Resource):
                     700,
                 )
 
-            # If signature is verified, decrypt the data
+            # Decrypt the data if signature is valid
             cipher = Cipher(
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
             decryptor = cipher.decryptor()
             decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
 
+            # Write the decrypted data to the client's directory
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
             return (
@@ -415,7 +424,7 @@ class checkout(Resource):
 
         else:
             # Handle unexpected security_flag values
-            return jsonify({"status": 700, "message": "Invalid security flag"}), 700
+            return jsonify({"status": 700, "message": "Other Failures"}), 700
 
 
 class grant(Resource):
