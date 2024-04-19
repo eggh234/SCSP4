@@ -18,7 +18,7 @@ import base64
 import json
 import shutil
 import os
-
+import base64
 
 secure_shared_service = Flask(__name__)
 api = Api(secure_shared_service)
@@ -106,25 +106,24 @@ class checkin(Resource):
         security_flag = data.get("security_flag")
         filename = data.get("document_id")
         client_file_data = data.get("file_data")
+        user_id = data.get("user_id")
         response = {}
+        server_document_folder = (
+            "/home/cs6238/Desktop/Project4/server/application/documents"
+        )
+        server_checkin_file_path = os.path.join(server_document_folder, filename)
+        aes_metadata_path = os.path.join(
+            server_document_folder, filename + "_AES_Key.txt.json"
+        )
+        server_public_key_path = (
+            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
+        )
+        server_private_key_path = (
+            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
+        )
 
         if security_flag == 1:
             try:
-                server_document_folder = (
-                    "/home/cs6238/Desktop/Project4/server/application/documents"
-                )
-                server_checkin_file_path = os.path.join(
-                    server_document_folder, filename
-                )
-                aes_metadata_path = os.path.join(
-                    server_document_folder, filename + "_AES_Key.txt.json"
-                )
-                server_public_key_path = (
-                    "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
-                )
-                server_private_key_path = (
-                    "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
-                )
 
                 # Ensure the directory exists before creating files
                 os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
@@ -175,7 +174,7 @@ class checkin(Resource):
                     encryptor.update(private_key_data) + encryptor.finalize()
                 )
 
-                # Store AES key, IV, encrypted private key, and security flag in the metadata file
+                # Store AES key, IV, encrypted private key, security flag, and user ID in the metadata file
                 aes_metadata = {
                     "aes_key": base64.b64encode(aes_key).decode("utf-8"),
                     "iv": base64.b64encode(aes_iv).decode("utf-8"),
@@ -183,11 +182,12 @@ class checkin(Resource):
                         encrypted_private_key_data
                     ).decode("utf-8"),
                     "security_flag": security_flag,  # Storing the security flag
+                    "user_id": user_id,  # Adding the user ID
                 }
                 with open(aes_metadata_path, "w") as json_file:
                     json.dump(aes_metadata, json_file)
                 print(
-                    f"AES key, encrypted server private key, and security flag stored in {aes_metadata_path}"
+                    f"AES key, encrypted server private key, security flag, and user id stored in {aes_metadata_path}"
                 )
 
                 # If all operations complete successfully, set success to True
@@ -199,23 +199,6 @@ class checkin(Resource):
 
         elif security_flag == 2:
             try:
-                # Path setup
-                server_document_folder = (
-                    "/home/cs6238/Desktop/Project4/server/application/documents"
-                )
-                server_checkin_file_path = os.path.join(
-                    server_document_folder, filename
-                )
-                server_public_key_path = (
-                    "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
-                )
-                server_private_key_path = (
-                    "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
-                )
-                aes_metadata_path = os.path.join(
-                    server_document_folder, filename + "_AES_Key.txt.json"
-                )
-
                 # Ensure the directory exists before creating files
                 os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
@@ -271,14 +254,21 @@ class checkin(Resource):
                 aes_key = os.urandom(32)  # AES-256 key
                 aes_iv = os.urandom(16)  # Initialization vector for AES
 
-                # Store AES key, IV, and security flag in the metadata file
+                # Store AES key, IV, encrypted private key, security flag, and user ID in the metadata file
                 aes_metadata = {
                     "aes_key": base64.b64encode(aes_key).decode("utf-8"),
                     "iv": base64.b64encode(aes_iv).decode("utf-8"),
+                    "encrypted_private_key": base64.b64encode(
+                        encrypted_private_key_data
+                    ).decode("utf-8"),
                     "security_flag": security_flag,  # Storing the security flag
+                    "user_id": user_id,  # Adding the user ID
                 }
                 with open(aes_metadata_path, "w") as json_file:
                     json.dump(aes_metadata, json_file)
+                print(
+                    f"AES key, encrypted server private key, security flag, and user id stored in {aes_metadata_path}"
+                )
 
                 success = True
 
@@ -324,29 +314,45 @@ class checkout(Resource):
         server_private_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
         )
-
         server_public_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
         )
-
         client_file_path = os.path.join(
             "/home/cs6238/Desktop/Project4/client1/documents/checkout", filename
         )
         signed_file_path = os.path.join(server_document_folder, f"{filename}.sign")
 
+        user_id = data.get("user_id")
+
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
-            return (
-                ({"status": 704, "message": "File not found on the server"}),
-                704,
-            )
+            return ({"status": 704, "message": "File not found on the server"}), 704
 
         if not os.path.isfile(aes_metadata_path):
-            print("file not found")
+            return ({"status": 700, "message": "Encryption metadata not found"}), 700
+
+        # Load AES key metadata from file
+        with open(aes_metadata_path, "r") as file:
+            aes_metadata = json.load(file)
+
+        # Retrieve the user ID stored in the AES key metadata file
+        stored_user_id = aes_metadata.get("user_id")
+
+        # Check if the current user matches the user ID stored in the key file
+        if user_id != stored_user_id:
+            return ({"status": 700, "message": "Unauthorized access attempt"}), 700
+
+        # Additional check for file ownership
+        file_owner_id = aes_metadata.get(
+            "owner_id", stored_user_id
+        )  # Assuming default to stored_user_id if not specified
+        if user_id != file_owner_id:
             return (
-                ({"status": 700, "message": "Encryption metadata not found"}),
-                700,
-            )
+                {
+                    "status": 700,
+                    "message": "Operation not allowed, user does not own the file",
+                }
+            ), 700
 
         # Load AES metadata
         with open(aes_metadata_path, "r") as file:
@@ -469,7 +475,7 @@ class checkout(Resource):
 
         else:
             # Handle unexpected security_flag values
-            return ({"status": 700, "message": "Unexpected security flag value"}), 700
+            return ({"status": 700, "message": "Other Failures"}), 700
 
 
 class grant(Resource):
