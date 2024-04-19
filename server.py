@@ -173,18 +173,19 @@ class checkin(Resource):
                     encryptor.update(private_key_data) + encryptor.finalize()
                 )
 
-                # Store AES key, IV, and encrypted private key in the metadata file
+                # Store AES key, IV, encrypted private key, and security flag in the metadata file
                 aes_metadata = {
                     "aes_key": base64.b64encode(aes_key).decode("utf-8"),
                     "iv": base64.b64encode(aes_iv).decode("utf-8"),
                     "encrypted_private_key": base64.b64encode(
                         encrypted_private_key_data
                     ).decode("utf-8"),
+                    "security_flag": security_flag,  # Storing the security flag
                 }
                 with open(aes_metadata_path, "w") as json_file:
                     json.dump(aes_metadata, json_file)
                 print(
-                    f"AES key and encrypted server private key stored in {aes_metadata_path}"
+                    f"AES key, encrypted server private key, and security flag stored in {aes_metadata_path}"
                 )
 
                 # If all operations complete successfully, set success to True
@@ -217,6 +218,12 @@ class checkin(Resource):
                 # Ensure the directory exists before creating files
                 os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
+                # Check if the file exists, if not, create it
+                if not os.path.isfile(server_checkin_file_path):
+                    with open(server_checkin_file_path, "wb") as file:
+                        file.write(client_file_data.encode())
+                    print(f"New file created at {server_checkin_file_path}")
+
                 # Encrypt the file with the server's public key
                 with open(server_public_key_path, "rb") as key_file:
                     public_key = serialization.load_pem_public_key(
@@ -235,7 +242,26 @@ class checkin(Resource):
                 # Write the encrypted file data to the server file
                 with open(server_checkin_file_path, "wb") as file:
                     file.write(encrypted_file_data)
-                print(f"File {filename} encrypted with the server's public key.")
+
+                # Sign the encrypted file with the server's private key
+                with open(server_private_key_path, "rb") as key_file:
+                    private_key = serialization.load_pem_private_key(
+                        key_file.read(), password=None, backend=default_backend()
+                    )
+
+                signature = private_key.sign(
+                    encrypted_file_data,
+                    padding.PSS(
+                        mgf=padding.MGF1(hashes.SHA256()),
+                        salt_length=padding.PSS.MAX_LENGTH,
+                    ),
+                    hashes.SHA256(),
+                )
+
+                # Write the signature to a .sign file
+                signature_file_path = f"{server_checkin_file_path}.sign"
+                with open(signature_file_path, "wb") as sign_file:
+                    sign_file.write(signature)
 
                 # Generate an AES key and IV for encrypting the server's private key
                 aes_key = os.urandom(32)  # AES-256 key
@@ -255,18 +281,19 @@ class checkin(Resource):
                     encryptor.update(private_key_data) + encryptor.finalize()
                 )
 
-                # Store AES key, IV, and encrypted private key in the metadata file
+                # Store AES key, IV, encrypted private key, and security flag in the metadata file
                 aes_metadata = {
                     "aes_key": base64.b64encode(aes_key).decode("utf-8"),
                     "iv": base64.b64encode(aes_iv).decode("utf-8"),
                     "encrypted_private_key": base64.b64encode(
                         encrypted_private_key_data
                     ).decode("utf-8"),
+                    "security_flag": security_flag,  # Storing the security flag
                 }
                 with open(aes_metadata_path, "w") as json_file:
                     json.dump(aes_metadata, json_file)
                 print(
-                    f"AES key and encrypted server private key stored in {aes_metadata_path}"
+                    f"AES key, encrypted server private key, and security flag stored in {aes_metadata_path}"
                 )
 
                 # Sign the encrypted file with the server's private key
@@ -422,6 +449,7 @@ class checkout(Resource):
     def post(self):
         data = request.get_json()
         token = data["token"]
+
         success = False
         if success:
             # Similar response format given below can be
