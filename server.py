@@ -287,63 +287,35 @@ class checkout(Resource):
             server_document_folder, filename + "_AES_Key.txt.json"
         )
 
-        server_private_key_path = (
-            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
-        )
-        server_public_key_path = (
-            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
-        )
+        user_id = data.get("user_id")
         client_file_path = os.path.join(
             "/home/cs6238/Desktop/Project4/client1/documents/checkout", filename
         )
-        signed_file_path = os.path.join(server_document_folder, f"{filename}.sign")
-
-        user_id = data.get("user_id")
 
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
             return ({"status": 704, "message": "File not found on the server"}), 704
 
         if not os.path.isfile(aes_metadata_path):
-            return ({"status": 700, "message": "Encryption metadata not found"}), 700
+            return ({"status": 704, "message": "Encryption metadata not found"}), 704
 
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:
             aes_metadata = json.load(file)
 
-        # Retrieve the user ID stored in the AES key metadata file
-        stored_user_id = aes_metadata.get("user_id")
-
-        # Check if the current user matches the user ID stored in the key file
-        if user_id != stored_user_id:
-            return ({"status": 700, "message": "Unauthorized access attempt"}), 700
-
-        # Additional check for file ownership
-        file_owner_id = aes_metadata.get(
-            "owner_id", stored_user_id
-        )  # Assuming default to stored_user_id if not specified
-        if user_id != file_owner_id:
-            return (
-                {
-                    "status": 700,
-                    "message": "Operation not allowed, user does not own the file",
-                }
-            ), 700
-
-        # Load AES metadata
-        with open(aes_metadata_path, "r") as file:
-            aes_metadata = json.load(file)
-
-        aes_key_base64 = aes_metadata["aes_key"]
-        aes_iv_base64 = aes_metadata["iv"]
-        key = base64.b64decode(aes_key_base64)
-        iv = base64.b64decode(aes_iv_base64)
-        security_flag = aes_metadata["security_flag"]
+        # Verify user ID
+        if aes_metadata["user_id"] != user_id:
+            return ({"status": 702, "message": "Access denied"}), 702
 
         # Process based on the security flag
+        security_flag = aes_metadata.get("security_flag", 0)
         if security_flag == 1:
-            print("flag1")
-            # Just decrypt and copy the data to the client's checkout path
+            # Decrypt the file using the AES key and IV from the metadata file
+            aes_key_base64 = aes_metadata["aes_key"]
+            aes_iv_base64 = aes_metadata["iv"]
+            key = base64.b64decode(aes_key_base64)
+            iv = base64.b64decode(aes_iv_base64)
+
             cipher = Cipher(
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
@@ -351,110 +323,112 @@ class checkout(Resource):
             with open(server_checkout_file_path, "rb") as enc_file:
                 encrypted_data = enc_file.read()
             decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
+
+            # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
+
             return (
-                ({"status": 200, "message": "Document Successfully checked out"}),
-                200,
-            )
+                {"status": 200, "message": "Document successfully checked out"}
+            ), 200
 
         elif security_flag == 2:
             print("flag2")
-            # Verify integrity and decrypt
-            if not os.path.isfile(signed_file_path):
-                print("check signed file path")
-                return (
-                    {"status": 700, "message": "Signature file not found"},
-                    700,
-                )
-            # Retrieve the user ID stored in the AES key metadata file
-            stored_user_id = aes_metadata.get("user_id")
+            # # Verify integrity and decrypt
+            # if not os.path.isfile(signed_file_path):
+            #     print("check signed file path")
+            #     return (
+            #         {"status": 700, "message": "Signature file not found"},
+            #         700,
+            #     )
+            # # Retrieve the user ID stored in the AES key metadata file
+            # stored_user_id = aes_metadata.get("user_id")
 
-            # Check if the current user matches the user ID stored in the key file
-            if user_id != stored_user_id:
-                return ({"status": 700, "message": "Unauthorized access attempt"}), 700
+            # # Check if the current user matches the user ID stored in the key file
+            # if user_id != stored_user_id:
+            #     return ({"status": 700, "message": "Unauthorized access attempt"}), 700
 
-            # Additional check for file ownership
-            file_owner_id = aes_metadata.get(
-                "owner_id", stored_user_id
-            )  # Assuming default to stored_user_id if not specified
-            if user_id != file_owner_id:
-                return (
-                    {
-                        "status": 700,
-                        "message": "Operation not allowed, user does not own the file",
-                    }
-                ), 700
+            # # Additional check for file ownership
+            # file_owner_id = aes_metadata.get(
+            #     "owner_id", stored_user_id
+            # )  # Assuming default to stored_user_id if not specified
+            # if user_id != file_owner_id:
+            #     return (
+            #         {
+            #             "status": 700,
+            #             "message": "Operation not allowed, user does not own the file",
+            #         }
+            #     ), 700
 
-            # Load the server's private key for decryption
-            with open(server_private_key_path, "rb") as key_file:
-                private_key = serialization.load_pem_private_key(
-                    key_file.read(),
-                    password=None,  # Replace with the private key password if needed
-                    backend=default_backend(),
-                )
-            print("loaded private key")
+            # # Load the server's private key for decryption
+            # with open(server_private_key_path, "rb") as key_file:
+            #     private_key = serialization.load_pem_private_key(
+            #         key_file.read(),
+            #         password=None,  # Replace with the private key password if needed
+            #         backend=default_backend(),
+            #     )
+            # print("loaded private key")
 
-            # Read the encrypted data
-            with open(server_checkout_file_path, "rb") as file:
-                encrypted_data = file.read()
+            # # Read the encrypted data
+            # with open(server_checkout_file_path, "rb") as file:
+            #     encrypted_data = file.read()
 
-            # Read the signature
-            with open(signed_file_path, "rb") as sign_file:
-                signature = sign_file.read()
+            # # Read the signature
+            # with open(signed_file_path, "rb") as sign_file:
+            #     signature = sign_file.read()
 
-            # Load the public key for signature verification
-            with open(server_public_key_path, "rb") as key_file:
-                public_key = load_pem_public_key(
-                    key_file.read(), backend=default_backend()
-                )
-            print("loaded public key")
+            # # Load the public key for signature verification
+            # with open(server_public_key_path, "rb") as key_file:
+            #     public_key = load_pem_public_key(
+            #         key_file.read(), backend=default_backend()
+            #     )
+            # print("loaded public key")
 
-            # Verify the signature
-            try:
-                public_key.verify(
-                    signature,
-                    encrypted_data,
-                    padding.PSS(
-                        mgf=padding.MGF1(hashes.SHA256()),
-                        salt_length=padding.PSS.MAX_LENGTH,
-                    ),
-                    hashes.SHA256(),
-                )
-                print("signature verified")
-            except cryptography.exceptions.InvalidSignature:
-                print("Invalid signature")
-                return (
-                    {
-                        "status": 703,
-                        "message": "Check out failed due to broken integrity",
-                    },
-                    703,
-                )
-            except Exception as e:
-                print(f"An exception occurred during signature verification: {e}")
-                return (
-                    {"status": 700, "message": "Signature verification failed"},
-                    700,
-                )
+            # # Verify the signature
+            # try:
+            #     public_key.verify(
+            #         signature,
+            #         encrypted_data,
+            #         padding.PSS(
+            #             mgf=padding.MGF1(hashes.SHA256()),
+            #             salt_length=padding.PSS.MAX_LENGTH,
+            #         ),
+            #         hashes.SHA256(),
+            #     )
+            #     print("signature verified")
+            # except cryptography.exceptions.InvalidSignature:
+            #     print("Invalid signature")
+            #     return (
+            #         {
+            #             "status": 703,
+            #             "message": "Check out failed due to broken integrity",
+            #         },
+            #         703,
+            #     )
+            # except Exception as e:
+            #     print(f"An exception occurred during signature verification: {e}")
+            #     return (
+            #         {"status": 700, "message": "Signature verification failed"},
+            #         700,
+            #     )
 
             # Decrypt the data using the server's private key
-            try:
-                decrypted_data = private_key.decrypt(
-                    encrypted_data,
-                    padding.OAEP(
-                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                        algorithm=hashes.SHA256(),
-                        label=None,  # This is where you can specify a label if required for the OAEP padding
-                    ),
-                )
-                print("decrypted data")
-            except Exception as e:
-                print(f"An exception occurred during decryption: {e}")
-                return (
-                    {"status": 704, "message": "Decryption failed"},
-                    704,
-                )
+            # try:
+            #     decrypted_data = private_key.decrypt(
+            #         encrypted_data,
+            #         padding.OAEP(
+            #             mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            #             algorithm=hashes.SHA256(),
+            #             label=None,  # This is where you can specify a label if required for the OAEP padding
+            #         ),
+            #     )
+            #     print("decrypted data")
+            # except Exception as e:
+            #     print(f"An exception occurred during decryption: {e}")
+            #     return (
+            #         {"status": 704, "message": "Decryption failed"},
+            #         704,
+            #     )
 
             # Write the decrypted data to the client's path
             with open(client_file_path, "wb") as file:
