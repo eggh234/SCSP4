@@ -9,7 +9,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from flask import Flask
-from flask_restful import Api, Resource, reqparse, abort, fields, marshal_with
+from flask_restful import Api, Resource
 from flask import jsonify
 from flask import request
 
@@ -348,6 +348,11 @@ class checkout(Resource):
         key = base64.b64decode(aes_key_base64)
         iv = base64.b64decode(aes_iv_base64)
         security_flag = aes_metadata["security_flag"]
+
+        print("aes key base: " + aes_key_base64)
+        print("aes iv: " + aes_iv_base64)
+        print("iv: " + iv)
+        print("flag:" + security_flag)
 
         # Process based on the security flag
         if security_flag == 1:
