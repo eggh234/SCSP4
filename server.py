@@ -150,6 +150,7 @@ class checkin(Resource):
                 aes_metadata = {
                     "aes_key": base64.b64encode(aes_key).decode("utf-8"),
                     "iv": base64.b64encode(aes_iv).decode("utf-8"),
+                    "security_flag": security_flag,
                     "user_id": user_id,  # Adding the user ID
                 }
                 with open(aes_metadata_path, "w") as json_file:
@@ -186,9 +187,10 @@ class checkin(Resource):
                     with open(server_checkin_file_path, "rb") as file:
                         file_data_to_sign = file.read()
 
-                    # Store user ID in the metadata file
+                    # Store user ID and security flag in the metadata file
                     aes_metadata = {
                         "user_id": user_id,  # Adding the user ID
+                        "security_flag": security_flag,
                     }
                     with open(aes_metadata_path, "w") as json_file:
                         json.dump(aes_metadata, json_file)
@@ -215,17 +217,17 @@ class checkin(Resource):
                     response = {
                         "status": 200,
                         "message": "Document successfully signed and signature file created",
-                    }, 200
+                    }
                 else:
                     print("Error: Original file not found for signing.")
                     response = {
                         "status": 704,
                         "message": "Original file not found",
-                    }, 704
+                    }
 
             except Exception as e:
                 print(f"An exception occurred: {e}")
-                response = {"status": 700, "message": "Signature process failed"}, 700
+                response = {"status": 700, "message": "Signature process failed"}
 
         if success:
             response = {
