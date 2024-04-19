@@ -10,6 +10,8 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from flask import Flask
 from flask_restful import Api, Resource, reqparse, abort, fields, marshal_with
+from flask import jsonify
+from flask import request
 
 # TODO: import additional modules as required
 import base64
@@ -78,7 +80,6 @@ class login(Resource):
 
         if success:
             session_token = "ABCD"
-            # Similar response format given below can be used for all the other functions
             response = {
                 "status": 200,
                 "message": "Login Successful",
@@ -197,7 +198,12 @@ class checkin(Resource):
             print(
                 f"File {filename} has been signed. Signature stored at {signed_file_path}."
             )
-
+            session_token = "ABCD"
+            response = {
+                "status": 200,
+                "message": "Document Successfully checked in",
+            }
+            return jsonify(response)
         elif security_flag == 2:
             # Load the public key
             with open(server_key_path, "rb") as key_file:
