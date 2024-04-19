@@ -431,19 +431,19 @@ class checkout(Resource):
             #     )
 
             # Write the decrypted data to the client's path
-            with open(client_file_path, "wb") as file:
-                file.write(decrypted_data)
-            print("File decrypted and written to client path")
+        #     with open(client_file_path, "wb") as file:
+        #         file.write(decrypted_data)
+        #     print("File decrypted and written to client path")
 
-            # Return a response indicating the successful operation
-            return (
-                {"status": 200, "message": "Document Successfully checked out"},
-                200,
-            )
+        #     # Return a response indicating the successful operation
+        #     return (
+        #         {"status": 200, "message": "Document Successfully checked out"},
+        #         200,
+        #     )
 
-        else:
-            # Handle unexpected security_flag values
-            return ({"status": 700, "message": "Other Failures"}), 700
+        # else:
+        #     # Handle unexpected security_flag values
+        #     return ({"status": 700, "message": "Other Failures"}), 700
 
 
 class grant(Resource):
