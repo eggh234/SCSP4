@@ -117,7 +117,7 @@ class checkin(Resource):
                     server_document_folder, filename
                 )
                 aes_metadata_path = os.path.join(
-                    server_document_folder, "AESkey.json.txt"
+                    server_document_folder, filename + "_AES_Key.txt.json"
                 )
                 server_public_key_path = (
                     "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
@@ -131,7 +131,9 @@ class checkin(Resource):
 
                 # Write or overwrite the file with the provided data
                 with open(server_checkin_file_path, "wb") as file:
-                    file.write(client_file_data.encode())  # Ensure client_file_data is a string. If it's already bytes, remove .encode()
+                    file.write(
+                        client_file_data.encode()
+                    )  # Ensure client_file_data is a string. If it's already bytes, remove .encode()
 
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
@@ -219,6 +221,14 @@ class checkin(Resource):
                     public_key = serialization.load_pem_public_key(
                         key_file.read(), backend=default_backend()
                     )
+
+                # Write or overwrite the file with the provided data
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(
+                        client_file_data.encode()
+                    )  # Ensure client_file_data is a string. If it's already bytes, remove .encode()
+
+                print(f"File created (or overwritten) at {server_checkin_file_path}")
 
                 encrypted_file_data = public_key.encrypt(
                     client_file_data.encode(),
