@@ -318,6 +318,9 @@ class checkout(Resource):
         aes_metadata_path = os.path.join(
             server_document_folder, filename + "_AES_Key.txt.json"
         )
+        server_private_key_path = (
+            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
+        )
         print("aes path")
         print(aes_metadata_path)
         client_file_path = os.path.join(
@@ -378,19 +381,19 @@ class checkout(Resource):
             if not os.path.isfile(signed_file_path):
                 print("check signed file path")
                 return (
-                    ({"status": 700, "message": "Signature file not found"}),
+                    {"status": 700, "message": "Signature file not found"},
                     700,
                 )
 
-            # Load the public key for verification
-            with open(
-                "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub",
-                "rb",
-            ) as key_file:
-                public_key = load_pem_public_key(
-                    key_file.read(), backend=default_backend()
+            # Load the server's private key for decryption
+            with open(server_private_key_path, "rb") as key_file:
+                private_key = serialization.load_pem_private_key(
+                    key_file.read(),
+                    password=None,  # Replace with the private key password if needed
+                    backend=default_backend(),
                 )
-            print("open public key")
+            print("loaded private key")
+
             # Read the encrypted data
             with open(server_checkout_file_path, "rb") as file:
                 encrypted_data = file.read()
@@ -398,6 +401,13 @@ class checkout(Resource):
             # Read the signature
             with open(signed_file_path, "rb") as sign_file:
                 signature = sign_file.read()
+
+            # Load the public key for signature verification
+            with open(server_public_key_path, "rb") as key_file:
+                public_key = load_pem_public_key(
+                    key_file.read(), backend=default_backend()
+                )
+            print("loaded public key")
 
             # Verify the signature
             try:
@@ -410,35 +420,45 @@ class checkout(Resource):
                     ),
                     hashes.SHA256(),
                 )
-                print("verify signature")
+                print("signature verified")
             except cryptography.exceptions.InvalidSignature:
+                print("Invalid signature")
                 return (
-                    (
-                        {
-                            "status": 703,
-                            "message": "Check out failed due to broken integrity",
-                        }
-                    ),
+                    {
+                        "status": 703,
+                        "message": "Check out failed due to broken integrity",
+                    },
                     703,
                 )
-            except Exception:
+            except Exception as e:
+                print(f"An exception occurred during signature verification: {e}")
                 return (
-                    ({"status": 700, "message": "Signature verification failed"}),
+                    {"status": 700, "message": "Signature verification failed"},
                     700,
                 )
 
-            # Initialize the cipher with the AES algorithm and CFB mode
-            cipher = Cipher(
-                algorithms.AES(key), modes.CFB(iv), backend=default_backend()
-            )
-            decryptor = cipher.decryptor()
+            # Decrypt the data using the server's private key
+            try:
+                decrypted_data = private_key.decrypt(
+                    encrypted_data,
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None,  # This is where you can specify a label if required for the OAEP padding
+                    ),
+                )
+                print("decrypted data")
+            except Exception as e:
+                print(f"An exception occurred during decryption: {e}")
+                return (
+                    {"status": 704, "message": "Decryption failed"},
+                    704,
+                )
 
-            # Decrypt the data
-            decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
-
-            # Write the decrypted data to the specified file path
+            # Write the decrypted data to the client's path
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
+            print("File decrypted and written to client path")
 
             # Return a response indicating the successful operation
             return (
@@ -448,7 +468,7 @@ class checkout(Resource):
 
         else:
             # Handle unexpected security_flag values
-            return ({"status": 700, "message": "Ending failure"}), 700
+            return ({"status": 700, "message": "Unexpected security flag value"}), 700
 
 
 class grant(Resource):
