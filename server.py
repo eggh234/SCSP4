@@ -139,12 +139,11 @@ class checkin(Resource):
                     encryptor.update(client_file_data.encode()) + encryptor.finalize()
                 )
 
-                # Overwrite the original file with encrypted data
+                # Write or overwrite the file with the provided data, decoding it from base64
                 with open(server_checkin_file_path, "wb") as file:
-                    file.write(encrypted_file_data)
-                print(
-                    f"File {filename} encrypted and saved at {server_checkin_file_path}."
-                )
+                    file.write(base64.b64decode(client_file_data))
+
+                print(f"File created (or overwritten) at {server_checkin_file_path}")
 
                 # Store AES key, IV, and user ID in the metadata file
                 aes_metadata = {
@@ -279,12 +278,10 @@ class checkout(Resource):
         signed_file_path = filename + ".sign"
 
         # Checks for the existence of the necessary files
-        print("check1")
         if not os.path.isfile(server_checkout_file_path):
             response = {"status": 704, "message": "File not found on the server"}, 704
 
         if not os.path.isfile(aes_metadata_path):
-            print("check2")
             response = {"status": 704, "message": "Encryption metadata not found"}, 704
 
         # Load AES key metadata from file
@@ -293,13 +290,10 @@ class checkout(Resource):
             aes_metadata = json.load(file)
 
         # Verify user ID
-        print("check4")
         if aes_metadata["user_id"] != user_id:
             response = {"status": 702, "message": "Access denied"}, 702
-
         # Read the security flag from the metadata
         security_flag = aes_metadata.get("security_flag", 0)
-        print("check4")
 
         # Process based on the security flag
         if security_flag == 1:
@@ -308,7 +302,6 @@ class checkout(Resource):
             aes_iv_base64 = aes_metadata["iv"]
             key = base64.b64decode(aes_key_base64)
             iv = base64.b64decode(aes_iv_base64)
-            print("check5")
             cipher = Cipher(
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
@@ -320,12 +313,10 @@ class checkout(Resource):
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
-            print("check6")
             response = {
                 "status": 200,
                 "message": "Document successfully checked out",
             }
-            print("check7")
 
         elif security_flag == 2:
             # Verify integrity with the signature
