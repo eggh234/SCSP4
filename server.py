@@ -178,12 +178,7 @@ class checkin(Resource):
                 # Ensure the directory exists before creating files
                 os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
-                # Write or overwrite the file with the provided data
-                with open(server_checkin_file_path, "wb") as file:
-                    file.write(client_file_data.encode())
-                print(f"File created (or overwritten) at {server_checkin_file_path}")
-
-                # Sign the file data with the server's private key
+                # Load the server's private key for signing the file data
                 with open(server_private_key_path, "rb") as key_file:
                     private_key = serialization.load_pem_private_key(
                         key_file.read(),
@@ -191,30 +186,38 @@ class checkin(Resource):
                         backend=default_backend(),
                     )
 
-                # Read the data to sign
-                with open(server_checkin_file_path, "rb") as file:
-                    file_data_to_sign = file.read()
+                # Read the file data to be signed
+                if os.path.exists(server_checkin_file_path):
+                    with open(server_checkin_file_path, "rb") as file:
+                        file_data_to_sign = file.read()
 
-                signature = private_key.sign(
-                    file_data_to_sign,
-                    padding.PSS(
-                        mgf=padding.MGF1(hashes.SHA256()),
-                        salt_length=padding.PSS.MAX_LENGTH,
-                    ),
-                    hashes.SHA256(),
-                )
+                    # Sign the file data using the private key
+                    signature = private_key.sign(
+                        file_data_to_sign,
+                        padding.PSS(
+                            mgf=padding.MGF1(hashes.SHA256()),
+                            salt_length=padding.PSS.MAX_LENGTH,
+                        ),
+                        hashes.SHA256(),
+                    )
 
-                # Write the signature to a .sign file associated with the document
-                signature_file_path = f"{server_checkin_file_path}.sign"
-                with open(signature_file_path, "wb") as sign_file:
-                    sign_file.write(signature)
-                print(f"Signature created and stored at {signature_file_path}")
+                    # Write the signature to a .sign file associated with the document
+                    signature_file_path = server_checkin_file_path + ".sign"
+                    with open(signature_file_path, "wb") as sign_file:
+                        sign_file.write(signature)
+                    print(f"Signature created and stored at {signature_file_path}")
 
-                success = True
+                    return {
+                        "status": 200,
+                        "message": "Document successfully signed and signature file created",
+                    }, 200
+                else:
+                    print("Error: Original file not found for signing.")
+                    return {"status": 704, "message": "Original file not found"}, 704
 
             except Exception as e:
                 print(f"An exception occurred: {e}")
-                success = False
+                return {"status": 700, "message": "Signature process failed"}, 700
 
         if success:
             response = {
