@@ -318,11 +318,15 @@ class checkout(Resource):
         aes_metadata_path = os.path.join(
             server_document_folder, filename + "_AES_Key.txt.json"
         )
+
         server_private_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
         )
-        print("aes path")
-        print(aes_metadata_path)
+
+        server_public_key_path = (
+            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
+        )
+
         client_file_path = os.path.join(
             "/home/cs6238/Desktop/Project4/client1/documents/checkout", filename
         )
@@ -351,11 +355,6 @@ class checkout(Resource):
         key = base64.b64decode(aes_key_base64)
         iv = base64.b64decode(aes_iv_base64)
         security_flag = aes_metadata["security_flag"]
-
-        print("aes key base: " + aes_key_base64)
-        print("aes iv: " + aes_iv_base64)
-        print("iv: " + iv)
-        print("flag:" + security_flag)
 
         # Process based on the security flag
         if security_flag == 1:
