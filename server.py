@@ -198,42 +198,83 @@ class checkin(Resource):
                 success = False
 
         elif security_flag == 2:
+            try:
+                # Ensure the directory exists before creating files
+                os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
-            # Ensure the directory exists before creating files
-            os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
+                # Write or overwrite the file with the provided data
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(client_file_data.encode())
 
-            # Write or overwrite the file with the provided data
-            with open(server_checkin_file_path, "wb") as file:
-                file.write(
-                    client_file_data.encode()
-                )  # Assumption: client_file_data is a string that needs encoding
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
-            # Sign the encrypted file with the server's private key
-            with open(server_private_key_path, "rb") as key_file:
-                private_key = serialization.load_pem_private_key(
-                    key_file.read(),
-                    password=None,  # If your private key is encrypted, specify the password here
-                    backend=default_backend(),
+                # Encrypt the file with the server's public key
+                with open(server_public_key_path, "rb") as key_file:
+                    public_key = serialization.load_pem_public_key(
+                        key_file.read(), backend=default_backend()
+                    )
+
+                encrypted_file_data = public_key.encrypt(
+                    client_file_data.encode(),
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None,
+                    ),
                 )
 
-            # Note: Ensure that 'encrypted_file_data' is properly defined and holds the content to be signed
-            signature = private_key.sign(
-                encrypted_file_data,  # This should be bytes, ensure this variable holds byte data
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH,
-                ),
-                hashes.SHA256(),
-            )
+                # Write the encrypted file data to the server file
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(encrypted_file_data)
+                print(f"File {filename} encrypted with the server's public key.")
 
-            # Write the signature to a .sign file
-            signature_file_name = f"{filename}_{user_id}_owner.sign"
-            with open(signature_file_name, "wb") as sign_file:
-                sign_file.write(signature)
-                print(f"Signature written to {signature_file_name}")
+                # Sign the encrypted file with the server's private key
+                with open(server_private_key_path, "rb") as key_file:
+                    private_key = serialization.load_pem_private_key(
+                        key_file.read(),
+                        password=None,
+                        backend=default_backend(),
+                    )
+
+                signature = private_key.sign(
+                    encrypted_file_data,
+                    padding.PSS(
+                        mgf=padding.MGF1(hashes.SHA256()),
+                        salt_length=padding.PSS.MAX_LENGTH,
+                    ),
+                    hashes.SHA256(),
+                )
+
+                # Write the signature to a .sign file
+                signature_file_path = f"{server_checkin_file_path}.sign"
+                with open(signature_file_path, "wb") as sign_file:
+                    sign_file.write(signature)
+
+                # Generate an AES key and IV for future operations
+                aes_key = os.urandom(32)  # AES-256 key
+                aes_iv = os.urandom(16)  # Initialization vector for AES
+
+                # Store AES key, IV, encrypted private key, security flag, and user ID in the metadata file
+                aes_metadata = {
+                    "aes_key": base64.b64encode(aes_key).decode("utf-8"),
+                    "iv": base64.b64encode(aes_iv).decode("utf-8"),
+                    "encrypted_private_key": base64.b64encode(
+                        encrypted_private_key_data
+                    ).decode("utf-8"),
+                    "security_flag": security_flag,  # Storing the security flag
+                    "user_id": user_id,  # Adding the user ID
+                }
+                with open(aes_metadata_path, "w") as json_file:
+                    json.dump(aes_metadata, json_file)
+                print(
+                    f"AES key, encrypted server private key, security flag, and user id stored in {aes_metadata_path}"
+                )
 
                 success = True
+
+            except Exception as e:
+                print(f"An exception occurred: {e}")
+                success = False
 
         if success:
             response = {
@@ -273,11 +314,9 @@ class checkout(Resource):
         server_private_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
         )
-
         server_public_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
         )
-
         client_file_path = os.path.join(
             "/home/cs6238/Desktop/Project4/client1/documents/checkout", filename
         )
@@ -302,6 +341,18 @@ class checkout(Resource):
         # Check if the current user matches the user ID stored in the key file
         if user_id != stored_user_id:
             return ({"status": 700, "message": "Unauthorized access attempt"}), 700
+
+        # Additional check for file ownership
+        file_owner_id = aes_metadata.get(
+            "owner_id", stored_user_id
+        )  # Assuming default to stored_user_id if not specified
+        if user_id != file_owner_id:
+            return (
+                {
+                    "status": 700,
+                    "message": "Operation not allowed, user does not own the file",
+                }
+            ), 700
 
         # Load AES metadata
         with open(aes_metadata_path, "r") as file:
@@ -332,32 +383,38 @@ class checkout(Resource):
             )
 
         elif security_flag == 2:
-            current_user_id = user_id
-            print(
-                "flag2 - Security level 2 engaged: Verification of file integrity and user validation."
-            )
-
-            # Assuming the filename structure is 'filename_userid_owner.sign'
-            try:
-                extracted_user_id = signed_file_path.split("_")[-2]
-                if current_user_id != extracted_user_id:
-                    print("User ID mismatch")
-                    return {"status": 700, "message": "Unauthorized user access"}, 700
-            except IndexError:
-                print("Filename format error")
-                return {"status": 700, "message": "Filename format is incorrect"}, 700
-
+            print("flag2")
             # Verify integrity and decrypt
             if not os.path.isfile(signed_file_path):
                 print("check signed file path")
-                return {"status": 700, "message": "Signature file not found"}, 700
+                return (
+                    {"status": 700, "message": "Signature file not found"},
+                    700,
+                )
+
+            # Load the server's private key for decryption
+            with open(server_private_key_path, "rb") as key_file:
+                private_key = serialization.load_pem_private_key(
+                    key_file.read(),
+                    password=None,  # Replace with the private key password if needed
+                    backend=default_backend(),
+                )
+            print("loaded private key")
+
+            # Read the encrypted data
+            with open(server_checkout_file_path, "rb") as file:
+                encrypted_data = file.read()
 
             # Read the signature
             with open(signed_file_path, "rb") as sign_file:
                 signature = sign_file.read()
 
+            # Load the public key for signature verification
             with open(server_public_key_path, "rb") as key_file:
-                public_key = load_pem_public_key(key_file.read())
+                public_key = load_pem_public_key(
+                    key_file.read(), backend=default_backend()
+                )
+            print("loaded public key")
 
             # Verify the signature
             try:
@@ -371,23 +428,54 @@ class checkout(Resource):
                     hashes.SHA256(),
                 )
                 print("signature verified")
-                return {"status": 200, "message": "File verified successfully"}, 200
-            except InvalidSignature:
+            except cryptography.exceptions.InvalidSignature:
                 print("Invalid signature")
-                return {
-                    "status": 703,
-                    "message": "Check out failed due to broken integrity",
-                }, 703
+                return (
+                    {
+                        "status": 703,
+                        "message": "Check out failed due to broken integrity",
+                    },
+                    703,
+                )
             except Exception as e:
                 print(f"An exception occurred during signature verification: {e}")
-                return {"status": 700, "message": "Signature verification failed"}, 700
+                return (
+                    {"status": 700, "message": "Signature verification failed"},
+                    700,
+                )
+
+            # Decrypt the data using the server's private key
+            try:
+                decrypted_data = private_key.decrypt(
+                    encrypted_data,
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None,  # This is where you can specify a label if required for the OAEP padding
+                    ),
+                )
+                print("decrypted data")
+            except Exception as e:
+                print(f"An exception occurred during decryption: {e}")
+                return (
+                    {"status": 704, "message": "Decryption failed"},
+                    704,
+                )
+
+            # Write the decrypted data to the client's path
+            with open(client_file_path, "wb") as file:
+                file.write(decrypted_data)
+            print("File decrypted and written to client path")
+
+            # Return a response indicating the successful operation
+            return (
+                {"status": 200, "message": "Document Successfully checked out"},
+                200,
+            )
+
         else:
-            # Handle other security flags or default case
-            print("Other security flag processing or no action defined for this flag.")
-            return {
-                "status": 700,
-                "message": "No action defined for this security flag",
-            }, 700
+            # Handle unexpected security_flag values
+            return ({"status": 700, "message": "Other Failures"}), 700
 
 
 class grant(Resource):
