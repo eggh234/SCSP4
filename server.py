@@ -178,6 +178,12 @@ class checkin(Resource):
                 # Ensure the directory exists before creating files
                 os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
+                # Write the file with the provided data
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(
+                        client_file_data.encode()
+                    )  # Ensure client_file_data is a string. If it's already bytes, remove .encode()
+
                 # Load the server's private key for signing the file data
                 with open(server_private_key_path, "rb") as key_file:
                     private_key = serialization.load_pem_private_key(
