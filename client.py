@@ -103,8 +103,10 @@ def login():
 
         if server_response.json().get("status") == 200:
             successful_login = True
-        else:
-            print(server_response.json().get("statement", "Try again"))
+        elif server_response.json().get("status") == 700:
+            print("status: 700")
+            print("message: Login Failed")
+            print("session_token: INVALID")
 
     return server_response.json()
 

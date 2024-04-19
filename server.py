@@ -93,7 +93,7 @@ class login(Resource):
         return jsonify(response)
 
 
-class Checkin(Resource):
+class checkin(Resource):
     """
     Expected response status codes:
     1) 200 - Document Successfully checked in
