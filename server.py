@@ -422,18 +422,22 @@ class checkout(Resource):
                     700,
                 )
 
-            # Decrypt the data if signature is valid
+            # Initialize the cipher with the AES algorithm and CFB mode
             cipher = Cipher(
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
             decryptor = cipher.decryptor()
+
+            # Decrypt the data
             decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
 
-            # Write the decrypted data to the client's directory
+            # Write the decrypted data to the specified file path
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
+
+            # Return a response indicating the successful operation
             return (
-                ({"status": 200, "message": "Document Successfully checked out"}),
+                {"status": 200, "message": "Document Successfully checked out"},
                 200,
             )
 
