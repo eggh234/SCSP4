@@ -76,6 +76,7 @@ def login():
 
     while not successful_login:
         # get the user id from the user input or default to user1
+        global user_id
         user_id = input(" User Id: ") or "user1"
 
         # get the user private key filename or default to user1.key
@@ -193,6 +194,8 @@ def checkin(session_token):
         "security_flag": security_flag,
         "document_id": file_name,
         "file_data": encoded_file_data,
+        "session_token": session_token,
+        "user_id": user_id,
     }
 
     server_response = post_request(
@@ -218,9 +221,10 @@ def checkout(session_token):
     """
     # Get document ID from user
     file_name = input("Please enter the file name: ")
-
+    print(file_name)
     body = {
         "document_id": file_name,
+        "user_id": user_id,
     }
     server_response = post_request(
         server_name, "checkout", body, node_certificate, node_key
