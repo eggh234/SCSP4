@@ -320,18 +320,19 @@ class checkout(Resource):
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
-
+            print("check6")
             response = {
                 "status": 200,
                 "message": "Document successfully checked out",
-            }, 200
+            }
+            print("check7")
 
         elif security_flag == 2:
             # Verify integrity with the signature
             signed_file_path = os.path.join(server_document_folder, filename + ".sign")
             if not os.path.isfile(signed_file_path):
                 print("Signature file not found")
-                response = {"status": 704, "message": "Signature file not found"}, 704
+                response = {"status": 704, "message": "Signature file not found"}
 
             # Read the signature
             with open(signed_file_path, "rb") as sign_file:
