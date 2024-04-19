@@ -123,31 +123,19 @@ class checkin(Resource):
             "/home/cs6238/Desktop/Project4/server/application/documents",
             f"{filename}.sign",
         )
-        # Ensure the directory exists before creating files
+
         os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
         os.makedirs(os.path.dirname(json_metadata_path), exist_ok=True)
 
-        # Check if the server file exists, if not, create it and write client data
         if not os.path.exists(server_checkin_file_path):
             try:
                 with open(server_checkin_file_path, "wb") as file:
-                    file.write(
-                        client_file_data.encode()
-                    )  # Assume client_file_data is a string
+                    file.write(client_file_data.encode())
                 print(
                     f"New file created and data written to {server_checkin_file_path}"
                 )
             except IOError as e:
                 print(f"Error writing file {server_checkin_file_path}: {e}")
-                return
-        else:
-            try:
-                with open(server_checkin_file_path, "rb") as file:
-                    file_data = file.read()
-                print("Existing file data on server:")
-                print(file_data)
-            except IOError as e:
-                print(f"Error reading file {server_checkin_file_path}: {e}")
                 return
 
         if security_flag == 1:
@@ -157,17 +145,22 @@ class checkin(Resource):
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
             encryptor = cipher.encryptor()
-            encrypted_data = encryptor.update(file_data) + encryptor.finalize()
+            encrypted_data = (
+                encryptor.update(client_file_data.encode()) + encryptor.finalize()
+            )
 
-            # Write the encrypted data to the server file
             with open(server_checkin_file_path, "wb") as file:
-                file.write(iv + encrypted_data)  # Store IV with the data
+                file.write(iv + encrypted_data)
 
-            # Convert key to hexadecimal and store in JSON metadata file
             metadata = {"key": key.hex(), "iv": iv.hex()}
             with open(json_metadata_path, "w") as json_file:
                 json.dump(metadata, json_file)
             print("File successfully encrypted and stored.")
+
+            response = {
+                "status": 200,
+                "message": "Document Successfully checked in",
+            }
 
             with open(server_key_path, "rb") as key_file:
                 private_key = serialization.load_pem_private_key(
@@ -198,12 +191,7 @@ class checkin(Resource):
             print(
                 f"File {filename} has been signed. Signature stored at {signed_file_path}."
             )
-            session_token = "ABCD"
-            response = {
-                "status": 200,
-                "message": "Document Successfully checked in",
-            }
-            return jsonify(response)
+
         elif security_flag == 2:
             # Load the public key
             with open(server_key_path, "rb") as key_file:
@@ -235,6 +223,8 @@ class checkin(Resource):
                 print("Verification failed: The signature is not valid.")
             except Exception as e:
                 print(f"An error occurred during the verification process: {e}")
+
+        return jsonify(response)
 
     print("Unidentified Input")
 
