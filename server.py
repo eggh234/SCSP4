@@ -216,19 +216,20 @@ class checkin(Resource):
                     server_document_folder, filename + "_AES_Key.txt.json"
                 )
 
+                # Ensure the directory exists before creating files
+                os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
+
+                # Write or overwrite the file with the provided data
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(client_file_data.encode())
+
+                print(f"File created (or overwritten) at {server_checkin_file_path}")
+
                 # Encrypt the file with the server's public key
                 with open(server_public_key_path, "rb") as key_file:
                     public_key = serialization.load_pem_public_key(
                         key_file.read(), backend=default_backend()
                     )
-
-                # Write or overwrite the file with the provided data
-                with open(server_checkin_file_path, "wb") as file:
-                    file.write(
-                        client_file_data.encode()
-                    )  # Ensure client_file_data is a string. If it's already bytes, remove .encode()
-
-                print(f"File created (or overwritten) at {server_checkin_file_path}")
 
                 encrypted_file_data = public_key.encrypt(
                     client_file_data.encode(),
@@ -242,12 +243,13 @@ class checkin(Resource):
                 # Write the encrypted file data to the server file
                 with open(server_checkin_file_path, "wb") as file:
                     file.write(encrypted_file_data)
+                print(f"File {filename} encrypted with the server's public key.")
 
                 # Sign the encrypted file with the server's private key
                 with open(server_private_key_path, "rb") as key_file:
                     private_key = serialization.load_pem_private_key(
                         key_file.read(),
-                        password=None,  # Replace with the private key password if needed
+                        password=None,
                         backend=default_backend(),
                     )
 
