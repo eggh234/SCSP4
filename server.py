@@ -124,7 +124,6 @@ class checkin(Resource):
 
         if security_flag == 1:
             try:
-
                 # Ensure the directory exists before creating files
                 os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
@@ -132,33 +131,13 @@ class checkin(Resource):
                 with open(server_checkin_file_path, "wb") as file:
                     file.write(
                         client_file_data.encode()
-                    )  # Ensure client_file_data is a string. If it's already bytes, remove .encode()
+                    )  # Ensure client_file_data is a string
 
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
-                # Encrypt the file with the server's public key
-                with open(server_public_key_path, "rb") as key_file:
-                    public_key = serialization.load_pem_public_key(
-                        key_file.read(), backend=default_backend()
-                    )
-
-                encrypted_file_data = public_key.encrypt(
-                    client_file_data.encode(),
-                    padding.OAEP(
-                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                        algorithm=hashes.SHA256(),
-                        label=None,
-                    ),
-                )
-
-                # Write the encrypted file data to the server file
-                with open(server_checkin_file_path, "wb") as file:
-                    file.write(encrypted_file_data)
-                print(f"File {filename} encrypted with the server's public key.")
-
-                # Generate an AES key and IV for encrypting the server's private key
+                # Generate an AES key and IV for encryption
                 aes_key = os.urandom(32)  # AES-256 key
-                aes_iv = os.urandom(16)  # Initialization vector for AES
+                aes_iv = os.urandom(16)  # Initialization vector
                 cipher = Cipher(
                     algorithms.AES(aes_key),
                     modes.CFB(aes_iv),
@@ -166,31 +145,28 @@ class checkin(Resource):
                 )
                 encryptor = cipher.encryptor()
 
-                # Load and encrypt the server's private key
-                with open(server_private_key_path, "rb") as key_file:
-                    private_key_data = key_file.read()
-
-                encrypted_private_key_data = (
-                    encryptor.update(private_key_data) + encryptor.finalize()
+                # Encrypt the file data
+                encrypted_file_data = (
+                    encryptor.update(client_file_data.encode()) + encryptor.finalize()
                 )
 
-                # Store AES key, IV, encrypted private key, security flag, and user ID in the metadata file
+                # Overwrite the original file with encrypted data
+                with open(server_checkin_file_path, "wb") as file:
+                    file.write(encrypted_file_data)
+                print(
+                    f"File {filename} encrypted and saved at {server_checkin_file_path}."
+                )
+
+                # Store AES key, IV, and user ID in the metadata file
                 aes_metadata = {
                     "aes_key": base64.b64encode(aes_key).decode("utf-8"),
                     "iv": base64.b64encode(aes_iv).decode("utf-8"),
-                    "encrypted_private_key": base64.b64encode(
-                        encrypted_private_key_data
-                    ).decode("utf-8"),
-                    "security_flag": security_flag,  # Storing the security flag
                     "user_id": user_id,  # Adding the user ID
                 }
                 with open(aes_metadata_path, "w") as json_file:
                     json.dump(aes_metadata, json_file)
-                print(
-                    f"AES key, encrypted server private key, security flag, and user id stored in {aes_metadata_path}"
-                )
+                print(f"AES key, IV, and user id stored in {aes_metadata_path}")
 
-                # If all operations complete successfully, set success to True
                 success = True
 
             except Exception as e:
