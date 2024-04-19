@@ -165,8 +165,6 @@ def checkin(session_token):
         print("Invalid input. Please use numeric values.")
         exit()
 
-    print("Security flag:", security_flag)
-
     # Get document ID from user
     file_name = input("Please enter the file name: ")
     client_checkin_file_path = os.path.join(
@@ -195,7 +193,6 @@ def checkin(session_token):
         "security_flag": security_flag,
         "document_id": file_name,
         "file_data": encoded_file_data,
-        "token": session_token,  # Assuming session_token is defined elsewhere
     }
 
     server_response = post_request(
@@ -203,11 +200,12 @@ def checkin(session_token):
         "checkin",
         body,
         node_certificate,
-        node_key,  # Assuming these variables are defined
+        node_key,
     )
 
     if server_response.json().get("status") == 200:
         print("Document Successfully checked in")
+
     elif server_response.json().get("status") == 702:
         print("Access denied checking in")
 
@@ -216,49 +214,32 @@ def checkin(session_token):
 
 def checkout(session_token):
     """
-    # TODO:
     Send request to server with required parameters (action = 'checkout') using post_request()
     """
-    successful_checkout = False
-    while not successful_checkout:
-        while True:
-            # Get document ID from user
-            file_name = input("Please enter the file name: ")
-            client_checkin_file_path = os.path.join(
-                "/home/cs6238/Desktop/Project4/client1/documents/checkin",
-                file_name,
-            )
+    # Get document ID from user
+    file_name = input("Please enter the file name: ")
 
-            if not os.path.isfile(client_checkin_file_path):
-                print(
-                    f"File not found at {client_checkin_file_path}. Please check the filename and try again."
-                )
-                return None
+    body = {
+        "document_id": file_name,
+        "token": session_token,
+    }
+    server_response = post_request(
+        server_name, "checkout", body, node_certificate, node_key
+    )
+    server_response_data = server_response.json()
 
-            body = {
-                "document_id": file_name,
-                "token": session_token,
-            }
-
-            server_response = post_request(
-                server_name, "checkout", body, node_certificate, node_key
-            )
-
-            if server_response.json().get("status") == 200:
-                print("Document Successfully checked out")
-                successful_checkout = True
-
-            elif server_response.json().get("status") == 702:
-                print("Access denied checking out")
-
-            elif server_response.json().get("status") == 703:
-                print("Check out failed due to broken integrity")
-
-            elif server_response.json().get("status") == 704:
-                print("Check out failed since file not found on the server")
-
-            elif server_response.json().get("status") == 700:
-                print("Other failures")
+    status = server_response_data.get("status")
+    if status == 200:
+        print("Document Successfully checked out")
+        return server_response_data
+    elif status == 702:
+        print("Access denied checking out")
+    elif status == 703:
+        print("Check out failed due to broken integrity")
+    elif status == 704:
+        print("Check out failed since file not found on the server")
+    elif status == 700:
+        print("Other failures")
 
     return server_response.json()
 
