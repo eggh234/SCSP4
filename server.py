@@ -314,13 +314,13 @@ class checkout(Resource):
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkin_file_path):
             return (
-                jsonify({"status": 704, "message": "File not found on the server"}),
+                ({"status": 704, "message": "File not found on the server"}),
                 704,
             )
 
         if not os.path.isfile(aes_metadata_path):
             return (
-                jsonify({"status": 700, "message": "Encryption metadata not found"}),
+                ({"status": 700, "message": "Encryption metadata not found"}),
                 700,
             )
 
@@ -345,9 +345,7 @@ class checkout(Resource):
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
             return (
-                jsonify(
-                    {"status": 200, "message": "Document Successfully checked out"}
-                ),
+                ({"status": 200, "message": "Document Successfully checked out"}),
                 200,
             )
 
@@ -355,7 +353,7 @@ class checkout(Resource):
             # Verify integrity and decrypt
             if not os.path.isfile(signed_file_path):
                 return (
-                    jsonify({"status": 700, "message": "Signature file not found"}),
+                    ({"status": 700, "message": "Signature file not found"}),
                     700,
                 )
 
@@ -389,7 +387,7 @@ class checkout(Resource):
                 )
             except cryptography.exceptions.InvalidSignature:
                 return (
-                    jsonify(
+                    (
                         {
                             "status": 703,
                             "message": "Check out failed due to broken integrity",
@@ -399,9 +397,7 @@ class checkout(Resource):
                 )
             except Exception:
                 return (
-                    jsonify(
-                        {"status": 700, "message": "Signature verification failed"}
-                    ),
+                    ({"status": 700, "message": "Signature verification failed"}),
                     700,
                 )
 
@@ -416,15 +412,13 @@ class checkout(Resource):
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
             return (
-                jsonify(
-                    {"status": 200, "message": "Document Successfully checked out"}
-                ),
+                ({"status": 200, "message": "Document Successfully checked out"}),
                 200,
             )
 
         else:
             # Handle unexpected security_flag values
-            return jsonify({"status": 700, "message": "Other Failures"}), 700
+            return ({"status": 700, "message": "Other Failures"}), 700
 
 
 class grant(Resource):
