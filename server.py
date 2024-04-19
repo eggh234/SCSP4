@@ -127,12 +127,6 @@ class checkin(Resource):
                 # Ensure the directory exists before creating files
                 os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
-                # Write or overwrite the file with the provided data, decoding it from base64
-                with open(server_checkin_file_path, "wb") as file:
-                    file.write(base64.b64decode(client_file_data))
-
-                print(f"File created (or overwritten) at {server_checkin_file_path}")
-
                 # Generate an AES key and IV for encryption
                 aes_key = os.urandom(32)  # AES-256 key
                 aes_iv = os.urandom(16)  # Initialization vector
@@ -176,11 +170,11 @@ class checkin(Resource):
                 # Ensure the directory exists before creating files
                 os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
 
-                # Write the file with the provided data
+                # Write or overwrite the file with the provided data, decoding it from base64
                 with open(server_checkin_file_path, "wb") as file:
-                    file.write(
-                        client_file_data.encode()
-                    )  # Ensure client_file_data is a string. If it's already bytes, remove .encode()
+                    file.write(base64.b64decode(client_file_data))
+
+                print(f"File created (or overwritten) at {server_checkin_file_path}")
 
                 # Load the server's private key for signing the file data
                 with open(server_private_key_path, "rb") as key_file:
