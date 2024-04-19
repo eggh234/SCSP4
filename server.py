@@ -181,39 +181,22 @@ class checkin(Resource):
                 # Write or overwrite the file with the provided data
                 with open(server_checkin_file_path, "wb") as file:
                     file.write(client_file_data.encode())
-
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
-                # Encrypt the file with the server's public key
-                with open(server_public_key_path, "rb") as key_file:
-                    public_key = serialization.load_pem_public_key(
-                        key_file.read(), backend=default_backend()
-                    )
-
-                encrypted_file_data = public_key.encrypt(
-                    client_file_data.encode(),
-                    padding.OAEP(
-                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                        algorithm=hashes.SHA256(),
-                        label=None,
-                    ),
-                )
-
-                # Write the encrypted file data to the server file
-                with open(server_checkin_file_path, "wb") as file:
-                    file.write(encrypted_file_data)
-                print(f"File {filename} encrypted with the server's public key.")
-
-                # Sign the encrypted file with the server's private key
+                # Sign the file data with the server's private key
                 with open(server_private_key_path, "rb") as key_file:
                     private_key = serialization.load_pem_private_key(
                         key_file.read(),
-                        password=None,
+                        password=None,  # Replace None with the password if the private key is encrypted
                         backend=default_backend(),
                     )
 
+                # Read the data to sign
+                with open(server_checkin_file_path, "rb") as file:
+                    file_data_to_sign = file.read()
+
                 signature = private_key.sign(
-                    encrypted_file_data,
+                    file_data_to_sign,
                     padding.PSS(
                         mgf=padding.MGF1(hashes.SHA256()),
                         salt_length=padding.PSS.MAX_LENGTH,
@@ -221,28 +204,11 @@ class checkin(Resource):
                     hashes.SHA256(),
                 )
 
-                # Write the signature to a .sign file
+                # Write the signature to a .sign file associated with the document
                 signature_file_path = f"{server_checkin_file_path}.sign"
                 with open(signature_file_path, "wb") as sign_file:
                     sign_file.write(signature)
-
-                # Generate an AES key and IV for future operations
-                aes_key = os.urandom(32)  # AES-256 key
-                aes_iv = os.urandom(16)  # Initialization vector for AES
-
-                # Store AES key, IV, security flag, and user ID in the metadata file
-                aes_metadata = {
-                    "aes_key": base64.b64encode(aes_key).decode("utf-8"),
-                    "iv": base64.b64encode(aes_iv).decode("utf-8"),
-                    "security_flag": security_flag,  # Storing the security flag
-                    "user_id": user_id,  # Adding the user ID
-                }
-
-                with open(aes_metadata_path, "w") as json_file:
-                    json.dump(aes_metadata, json_file)
-                print(
-                    f"AES key, IV, security flag, and user ID stored in {aes_metadata_path}"
-                )
+                print(f"Signature created and stored at {signature_file_path}")
 
                 success = True
 
