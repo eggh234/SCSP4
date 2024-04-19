@@ -189,6 +189,16 @@ class checkin(Resource):
                     with open(server_checkin_file_path, "rb") as file:
                         file_data_to_sign = file.read()
 
+                    # Store user ID in the metadata file
+                    aes_metadata = {
+                        "user_id": user_id,  # Adding the user ID
+                    }
+                    with open(aes_metadata_path, "w") as json_file:
+                        json.dump(aes_metadata, json_file)
+                    print(f"user id stored in {aes_metadata_path}")
+
+                    success = True
+
                     # Sign the file data using the private key
                     signature = private_key.sign(
                         file_data_to_sign,
@@ -267,8 +277,6 @@ class checkout(Resource):
         signed_file_path = filename + ".sign"
 
         # Checks for the existence of the necessary files
-        print(server_checkout_file_path)
-        print(os.path)
         if not os.path.isfile(server_checkout_file_path):
             return {"status": 704, "message": "File not found on the server"}, 704
 
