@@ -285,7 +285,6 @@ class checkout(Resource):
             response = {"status": 704, "message": "Encryption metadata not found"}, 704
 
         # Load AES key metadata from file
-        print("check3")
         with open(aes_metadata_path, "r") as file:
             aes_metadata = json.load(file)
 
@@ -312,7 +311,7 @@ class checkout(Resource):
 
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
-                file.write(decrypted_data)
+                file.write(base64.b64decode((decrypted_data)))
             response = {
                 "status": 200,
                 "message": "Document successfully checked out",
