@@ -140,7 +140,7 @@ def checkin(session_token):
     # send it to the server including DID security flag and token
 
     # on server side
-    # generate a Key with AES GPT this part
+    # generate a Key with AES
     # encrypt the file1 or file 2 with the AES key and maintain the key in the metadata in the server side
     # confidentiaity
 
@@ -149,8 +149,8 @@ def checkin(session_token):
     # when client requests file you sign it with the servers private key
     # create a .sign folder
     # use the .sign and the normal
-    # i have a servers private key and i want to sign a file at this location how do i do this GPT
-    # ask for decryption methods as well for GPT for the checkout part
+    # i have a servers private key and i want to sign a file at this location
+    # get decryption methods
     successful_checkin = False
     while not successful_checkin:
         # Get security flag from user
@@ -201,7 +201,7 @@ def checkin(session_token):
         body = {
             "security_flag": security_flag,
             "document_id": file_name,
-            "file_data": encoded_file_data,  # Use the encoded data here
+            "file_data": encoded_file_data,
             "token": session_token,
         }
 
@@ -221,16 +221,54 @@ def checkin(session_token):
 
     return server_response.json()
 
-    # return None
-
 
 def checkout(session_token):
     """
     # TODO:
     Send request to server with required parameters (action = 'checkout') using post_request()
     """
+    successful_checkout = False
+    while not successful_checkout:
+        while True:
+            # Get document ID from user
+            file_name = input("Please enter the file name: ")
+            client_checkin_file_path = os.path.join(
+                "/home/cs6238/Desktop/Project4/client1/documents/checkin",
+                file_name,
+            )
 
-    return
+            if not os.path.isfile(client_checkin_file_path):
+                print(
+                    f"File not found at {client_checkin_file_path}. Please check the filename and try again."
+                )
+                return None
+
+            body = {
+                "document_id": file_name,
+                "token": session_token,
+            }
+
+            server_response = post_request(
+                server_name, "checkout", body, node_certificate, node_key
+            )
+
+            if server_response.json().get("status") == 200:
+                print("Document Successfully checked out")
+                successful_checkout = True
+
+            elif server_response.json().get("status") == 702:
+                print("Access denied checking out")
+
+            elif server_response.json().get("status") == 703:
+                print("Check out failed due to broken integrity")
+
+            elif server_response.json().get("status") == 704:
+                print("Check out failed since file not found on the server")
+
+            elif server_response.json().get("status") == 700:
+                print("Other failures")
+
+    return server_response.json()
 
 
 def grant(session_token):

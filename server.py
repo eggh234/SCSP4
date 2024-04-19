@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
 # TODO: import additional modules as required
 import base64
@@ -112,6 +113,13 @@ class Checkin(Resource):
             f"{filename}.json",
         )
 
+        server_key_path = (
+            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
+        )
+        signed_file_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/server/application/documents",
+            f"{filename}.sign",
+        )
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(server_checkin_file_path), exist_ok=True)
         os.makedirs(os.path.dirname(json_metadata_path), exist_ok=True)
@@ -157,8 +165,70 @@ class Checkin(Resource):
             with open(json_metadata_path, "w") as json_file:
                 json.dump(metadata, json_file)
             print("File successfully encrypted and stored.")
-        else:
-            print(f"Security flag is not set for encryption: {security_flag}")
+
+            with open(server_key_path, "rb") as key_file:
+                private_key = serialization.load_pem_private_key(
+                    key_file.read(),
+                    password=None,  # Replace with the password if the key is encrypted
+                    backend=default_backend(),
+                )
+
+            # Sign file code start
+            # Read the content of the file to be signed
+            with open(server_checkin_file_path, "rb") as f:
+                file_data = f.read()
+
+            # Sign the data of the file
+            signature = private_key.sign(
+                file_data,
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH,
+                ),
+                hashes.SHA256(),
+            )
+
+            # Write the signature to a .sign file
+            with open(signed_file_path, "wb") as sign_file:
+                sign_file.write(signature)
+
+            print(
+                f"File {filename} has been signed. Signature stored at {signed_file_path}."
+            )
+
+        elif security_flag == 2:
+            # Load the public key
+            with open(server_key_path, "rb") as key_file:
+                public_key = load_pem_public_key(
+                    key_file.read(), backend=default_backend()
+                )
+
+            # Read the document to verify
+            with open(server_checkin_file_path, "rb") as file:
+                document_data = file.read()
+
+            # Read the signature from the .sign file
+            with open(signed_file_path, "rb") as sign_file:
+                signature = sign_file.read()
+
+            # Verify the signature
+            try:
+                public_key.verify(
+                    signature,
+                    document_data,
+                    padding.PSS(
+                        mgf=padding.MGF1(hashes.SHA256()),
+                        salt_length=padding.PSS.MAX_LENGTH,
+                    ),
+                    hashes.SHA256(),
+                )
+                print("Verification successful: The signature is valid.")
+            except cryptography.exceptions.InvalidSignature:
+                print("Verification failed: The signature is not valid.")
+            except Exception as e:
+                print(f"An error occurred during the verification process: {e}")
+
+    print("Unidentified Input")
 
     def post(self):
         data = request.get_json()
@@ -180,13 +250,111 @@ class Checkin(Resource):
 
 class checkout(Resource):
     """
-    Expected response status codes
+    Expected response status codes:
     1) 200 - Document Successfully checked out
     2) 702 - Access denied checking out
     3) 703 - Check out failed due to broken integrity
     4) 704 - Check out failed since file not found on the server
     5) 700 - Other failures
     """
+
+    def post(self):
+        data = request.get_json()
+        filename = data.get("document_id")
+        server_checkin_file_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/server/application/documents", filename
+        )
+        json_metadata_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/server/application/documents",
+            f"{filename}.json",
+        )
+        client_file_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/client1/documents/checkout",
+            filename,
+        )
+        signed_file_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/server/application/documents",
+            f"{filename}.sign",
+        )
+
+        # Ensure encrypted data file exists
+        if not os.path.exists(server_checkin_file_path):
+            return (
+                jsonify({"status": 704, "message": "File not found on the server"}),
+                704,
+            )
+
+        # Ensure JSON metadata exists
+        if not os.path.exists(json_metadata_path):
+            return (
+                jsonify({"status": 700, "message": "Encryption metadata not found"}),
+                700,
+            )
+
+        # Ensure signature file exists
+        if not os.path.exists(signed_file_path):
+            return jsonify({"status": 700, "message": "Signature file not found"}), 700
+
+        # Load public key for verifying signature
+        with open(
+            "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub", "rb"
+        ) as key_file:
+            public_key = load_pem_public_key(key_file.read(), backend=default_backend())
+
+        # Read the encrypted data
+        with open(server_checkin_file_path, "rb") as file:
+            document_data = file.read()
+
+        # Read the signature
+        with open(signed_file_path, "rb") as sign_file:
+            signature = sign_file.read()
+
+        # Verify the signature
+        try:
+            public_key.verify(
+                signature,
+                document_data,
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH,
+                ),
+                hashes.SHA256(),
+            )
+        except cryptography.exceptions.InvalidSignature:
+            return (
+                jsonify(
+                    {
+                        "status": 703,
+                        "message": "Check out failed due to broken integrity",
+                    }
+                ),
+                703,
+            )
+        except Exception as e:
+            return (
+                jsonify({"status": 700, "message": "Signature verification failed"}),
+                700,
+            )
+
+        # If signature is verified, read AES key and IV from the JSON metadata file
+        with open(json_metadata_path, "r") as file:
+            metadata = json.load(file)
+        key = bytes.fromhex(metadata["key"])
+        iv = bytes.fromhex(metadata["iv"])
+
+        # Decrypt the data
+        cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
+        decryptor = cipher.decryptor()
+        decrypted_data = decryptor.update(document_data) + decryptor.finalize()
+
+        # Write the decrypted data to the client's directory
+        with open(client_file_path, "wb") as dec_file:
+            dec_file.write(decrypted_data)
+
+        return (
+            jsonify({"status": 200, "message": "Document Successfully checked out"}),
+            200,
+        )
 
     def post(self):
         data = request.get_json()
