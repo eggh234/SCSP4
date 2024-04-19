@@ -279,22 +279,27 @@ class checkout(Resource):
         signed_file_path = filename + ".sign"
 
         # Checks for the existence of the necessary files
+        print("check1")
         if not os.path.isfile(server_checkout_file_path):
             response = {"status": 704, "message": "File not found on the server"}, 704
 
         if not os.path.isfile(aes_metadata_path):
+            print("check2")
             response = {"status": 704, "message": "Encryption metadata not found"}, 704
 
         # Load AES key metadata from file
+        print("check3")
         with open(aes_metadata_path, "r") as file:
             aes_metadata = json.load(file)
 
         # Verify user ID
+        print("check4")
         if aes_metadata["user_id"] != user_id:
             response = {"status": 702, "message": "Access denied"}, 702
 
         # Read the security flag from the metadata
         security_flag = aes_metadata.get("security_flag", 0)
+        print("check4")
 
         # Process based on the security flag
         if security_flag == 1:
@@ -303,7 +308,7 @@ class checkout(Resource):
             aes_iv_base64 = aes_metadata["iv"]
             key = base64.b64decode(aes_key_base64)
             iv = base64.b64decode(aes_iv_base64)
-
+            print("check5")
             cipher = Cipher(
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
