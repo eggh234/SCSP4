@@ -328,9 +328,11 @@ class checkout(Resource):
         with open(aes_metadata_path, "r") as file:
             aes_metadata = json.load(file)
 
-        key = base64.b64decode(aes_metadata["aes_key"])
-        iv = base64.b64decode(aes_metadata["iv"])
-        security_flag = aes_metadata.get("security_flag")
+        aes_key_base64 = aes_metadata["aes_key"]
+        aes_iv_base64 = aes_metadata["iv"]
+        key = base64.b64decode(aes_key_base64)
+        iv = base64.b64decode(aes_iv_base64)
+        security_flag = aes_metadata["security_flag"]
 
         # Process based on the security flag
         if security_flag == 1:
