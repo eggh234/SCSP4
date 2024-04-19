@@ -208,26 +208,6 @@ class checkin(Resource):
 
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
-                # Encrypt the file with the server's public key
-                with open(server_public_key_path, "rb") as key_file:
-                    public_key = serialization.load_pem_public_key(
-                        key_file.read(), backend=default_backend()
-                    )
-
-                encrypted_file_data = public_key.encrypt(
-                    client_file_data.encode(),
-                    padding.OAEP(
-                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                        algorithm=hashes.SHA256(),
-                        label=None,
-                    ),
-                )
-
-                # Write the encrypted file data to the server file
-                with open(server_checkin_file_path, "wb") as file:
-                    file.write(encrypted_file_data)
-                print(f"File {filename} encrypted with the server's public key.")
-
                 # Sign the encrypted file with the server's private key
                 with open(server_private_key_path, "rb") as key_file:
                     private_key = serialization.load_pem_private_key(
@@ -249,26 +229,6 @@ class checkin(Resource):
                 signature_file_path = f"{server_checkin_file_path}.sign"
                 with open(signature_file_path, "wb") as sign_file:
                     sign_file.write(signature)
-
-                # Generate an AES key and IV for future operations
-                aes_key = os.urandom(32)  # AES-256 key
-                aes_iv = os.urandom(16)  # Initialization vector for AES
-
-                # Store AES key, IV, encrypted private key, security flag, and user ID in the metadata file
-                aes_metadata = {
-                    "aes_key": base64.b64encode(aes_key).decode("utf-8"),
-                    "iv": base64.b64encode(aes_iv).decode("utf-8"),
-                    "encrypted_private_key": base64.b64encode(
-                        encrypted_private_key_data
-                    ).decode("utf-8"),
-                    "security_flag": security_flag,  # Storing the security flag
-                    "user_id": user_id,  # Adding the user ID
-                }
-                with open(aes_metadata_path, "w") as json_file:
-                    json.dump(aes_metadata, json_file)
-                print(
-                    f"AES key, encrypted server private key, security flag, and user id stored in {aes_metadata_path}"
-                )
 
                 success = True
 
