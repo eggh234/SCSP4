@@ -221,24 +221,24 @@ def checkout(session_token):
 
     body = {
         "document_id": file_name,
-        "token": session_token,
     }
     server_response = post_request(
         server_name, "checkout", body, node_certificate, node_key
     )
-    server_response_data = server_response.json()
 
-    status = server_response_data.get("status")
-    if status == 200:
+    if server_response.json().get("status") == 200:
         print("Document Successfully checked out")
-        return server_response_data
-    elif status == 702:
+
+    elif server_response.json().get("status") == 702:
         print("Access denied checking out")
-    elif status == 703:
+
+    elif server_response.json().get("status") == 703:
         print("Check out failed due to broken integrity")
-    elif status == 704:
+
+    elif server_response.json().get("status") == 704:
         print("Check out failed since file not found on the server")
-    elif status == 700:
+
+    elif server_response.json().get("status") == 700:
         print("Other failures")
 
     return server_response.json()
