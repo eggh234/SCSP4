@@ -282,10 +282,10 @@ class checkout(Resource):
 
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
-            response = {"status": 704, "message": "File not found on the server"}, 704
+            response = {"status": 704, "message": "File not found on the server"}
 
         if not os.path.isfile(aes_metadata_path):
-            response = {"status": 704, "message": "Encryption metadata not found"}, 704
+            response = {"status": 704, "message": "Encryption metadata not found"}
 
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:
@@ -294,7 +294,9 @@ class checkout(Resource):
         # Verify user ID
         aes_user_id = aes_metadata.get("user_id", 0)
         if aes_user_id != user_id:
-            response = {"status": 702, "message": "Access denied"}, 702
+            response = {"status": 702, "message": "Access denied"}
+            return jsonify(response)
+
         # Read the security flag from the metadata
         security_flag = aes_metadata.get("security_flag", 0)
 
@@ -404,10 +406,10 @@ class grant(Resource):
         token = data["token"]
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
-            response = {"status": 704, "message": "File not found on the server"}, 704
+            response = {"status": 704, "message": "File not found on the server"}
 
         if not os.path.isfile(aes_metadata_path):
-            response = {"status": 704, "message": "Metadata not found"}, 704
+            response = {"status": 704, "message": "Metadata not found"}
 
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:
@@ -415,7 +417,7 @@ class grant(Resource):
 
         # Verify user ID
         if aes_metadata["user_id"] != user_id:
-            response = {"status": 702, "message": "Access denied"}, 702
+            response = {"status": 702, "message": "Access denied"}
         # Read the grant flag from the metadata
 
         actual_grant_flag = aes_metadata.get("grant_flag", 0)
