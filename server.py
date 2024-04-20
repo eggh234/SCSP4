@@ -45,10 +45,12 @@ def verify_statement(statement, signed_statement, user_public_key_file):
             signed_statement,
             statement.encode("utf-8"),
             padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
             ),
             hashes.SHA256(),
         )
+        print("Signature verified")
         return True
     except Exception as e:
         print(f"Verification failed: {e}")
@@ -407,27 +409,24 @@ class checkout(Resource):
                     os.remove(file)
                     print("file processed successfully")
 
+                response = {
+                    "status": 200,
+                    "message": "Document successfully checked out",
+                }
             except Exception as e:
                 response = {
                     "status": 700,
                     "message": "File processed unsuccessfully " + str(e),
                 }
 
-            response = {
-                "status": 200,
-                "message": "Document successfully checked out",
-            }
-
         elif security_flag == 2:
             # Verify integrity with the signature
             signed_file_path = os.path.join(server_document_folder, filename + ".sign")
+
             if not os.path.isfile(signed_file_path):
                 print("Signature file not found")
                 response = {"status": 704, "message": "Signature file not found"}
-
-            # Read the signature
-            with open(signed_file_path, "rb") as sign_file:
-                signature = sign_file.read()
+                return jsonify(response)
 
             # Load the server's public key for signature verification
             with open(server_public_key_path, "rb") as key_file:
@@ -435,6 +434,10 @@ class checkout(Resource):
                     key_file.read(), backend=default_backend()
                 )
             print("Public key loaded")
+
+            # Read the signature
+            with open(signed_file_path, "rb") as sign_file:
+                signature = sign_file.read()
 
             # Read the encrypted data
             with open(server_checkout_file_path, "rb") as file:
@@ -458,11 +461,14 @@ class checkout(Resource):
                     client_file.write(encrypted_data)
                 print("Encrypted file copied to client path")
 
+            except cryptography.exceptions.InvalidSignature:
+                print("Invalid signature")
+                response = {"status": 703, "message": "Invalid signature"}
+                return jsonify(response)
             except Exception as e:
-                response = {
-                    "status": 700,
-                    "message": "Other Errors" + str(e),
-                }
+                print(f"An exception occurred during signature verification: {e}")
+                response = {"status": 700, "message": "Signature verification failed"}
+                return jsonify(response)
 
             try:
                 # Delete the specified file and its metadata
@@ -472,27 +478,19 @@ class checkout(Resource):
                 pattern = os.path.join(server_document_folder, filename + "*")
                 for file in glob.glob(pattern):
                     os.remove(file)
-                    print("File processed successfully")
-
-            except Exception as e:
-                response = {
-                    "status": 700,
-                    "message": "Other Errors " + str(e),
-                }
+                print("File processed successfully")
 
                 response = {
                     "status": 200,
                     "message": "Document successfully checked out and signature verified",
                 }
-
-            except cryptography.exceptions.InvalidSignature:
-                print("Invalid signature")
-                return {"status": 703, "message": "Invalid signature"}
             except Exception as e:
-                print(f"An exception occurred during signature verification: {e}")
-                response = {"status": 700, "message": "Signature verification failed"}
-
-        return jsonify(response)
+                print(f"An exception occurred while deleting the file: {e}")
+                response = {
+                    "status": 700,
+                    "message": "Other Errors " + str(e),
+                }
+            return jsonify(response)
 
 
 class grant(Resource):
@@ -674,6 +672,38 @@ class logout(Resource):
             data = request.get_json()
             token = data["token"]
 
+        # def logout(user_id):
+        #     server_document_folder = "/home/cs6238/Desktop/Project4/server/application/documents"
+        #     session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+
+        #     # Step 1: List all metadata files
+        #     metadata_files = [f for f in os.listdir(server_document_folder) if f.endswith("_AES_Key.txt.json")]
+
+        #     # Step 2: Read user_id from each metadata file and check if the corresponding file exists
+        #     for metadata_file in metadata_files:
+        #         with open(os.path.join(server_document_folder, metadata_file), 'r') as file:
+        #             metadata = json.load(file)
+        #         if metadata['user_id'] == user_id:
+        #             filename = metadata_file.replace("_AES_Key.txt.json", "")
+        #             if not os.path.isfile(os.path.join(server_document_folder, filename)):
+        #                 # Step 3: File not checked in, ask the user to check in
+        #                 return f"Please check in the file {filename} before logging out."
+
+        #     # Step 4: All files checked in, remove user's session
+        #     if os.path.isfile(session_file_path):
+        #         with open(session_file_path, 'r') as file:
+        #             sessions = json.load(file)
+        #         # Remove the session for the user_id
+        #         if user_id in sessions:
+        #             del sessions[user_id]
+        #             with open(session_file_path, 'w') as file:
+        #                 json.dump(sessions, file)
+        #         else:
+        #             return "No active session for this user."
+        #     else:
+        #         return "Session file does not exist."
+
+        #     return "Logout successful."
         success = False
         if success:
             # Similar response format given below can be
