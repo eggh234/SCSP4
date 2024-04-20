@@ -121,40 +121,6 @@ def checkin(session_token):
     The request body should contain the required parameters to ensure the file is sent to the server.
     """
 
-    # copy paste file from client to server
-    # if flag is 1 then encrypt with randomly generated key and store it in metadata while encrypted with servers public key
-    # if flag is 2 then you create a signature for the file
-    # server store the aes key inside the json file in documents folder
-    # make checkin randomly generated tokens
-    # make a metadata file
-    # metadata = {
-    # client side             'doc_id': doc_id,
-    #             'owner': owner,
-    # client side             'security_flag': security_flag,
-    #             'grant_user':"",
-    #             'grant_token' : "",
-    #             'grant_access' : "",
-    #             'aes_key' : ""
-
-    #         }
-    # ask client for file path to file1 or file2
-    # open the file
-    # make a body request
-    # send it to the server including DID security flag and token
-
-    # on server side
-    # generate a Key with AES
-    # encrypt the file1 or file 2 with the AES key and maintain the key in the metadata in the server side
-    # confidentiaity
-
-    # integrity
-    # sign the file with the key
-    # when client requests file you sign it with the servers private key
-    # create a .sign folder
-    # use the .sign and the normal
-    # i have a servers private key and i want to sign a file at this location
-    # get decryption methods
-
     try:
         security_flag = int(
             input("Please enter a flag (1 for confidentiality, 2 for integrity): ")
