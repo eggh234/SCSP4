@@ -32,34 +32,26 @@ class welcome(Resource):
 
 
 def verify_statement(statement, signed_statement, user_public_key_file):
-    print("Received signed-statement (base64):", signed_statement)
-    signed_statement = base64.b64decode(signed_statement)
-    print("Decoded signed statement (bytes):", signed_statement)
-
-    print("Original statement:", statement)
-    encoded_statement = statement.encode("utf-8")
-    print("Encoded statement (to be verified):", encoded_statement)
-
-    with open(user_public_key_file, "rb") as key_file:
-        print("Loading public key from file:", user_public_key_file)
-        public_key = serialization.load_pem_public_key(
-            key_file.read(), backend=default_backend()
-        )
-        print("Public key loaded successfully.")
-
     try:
+        with open(user_public_key_file, "rb") as key_file:
+            public_key = serialization.load_pem_public_key(
+                key_file.read(), backend=default_backend()
+            )
+
+        # print("verify_statement.publicKey = ", public_key)
+
+        # Verify the signature
         public_key.verify(
             signed_statement,
-            statement,
+            statement.encode("utf-8"),
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
             ),
             hashes.SHA256(),
         )
-        print("Verification successful.")
         return True
     except Exception as e:
-        print("Verification failed:", str(e))
+        print(f"Verification failed: {e}")
         return False
 
 
