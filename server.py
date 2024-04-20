@@ -317,6 +317,7 @@ class checkout(Resource):
     def post(self):
         data = request.get_json()
         filename = data.get("document_id")
+        user_session_token = data.get("session_token")
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
@@ -337,7 +338,22 @@ class checkout(Resource):
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
         )
 
+        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+
         signed_file_path = filename + ".sign"
+
+        # Ensure the directory exists before creating files
+        os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
+
+        # Load session data metadata from file
+        with open(session_file_path, "r") as file:
+            session_data = json.load(file)
+
+        # Verify user session token
+        server_sesion_token = session_data.get("session_token", 0)
+        if user_session_token != server_sesion_token:
+            response = {"status": 700, "message": "Session token mismatch"}
+            return jsonify(response)
 
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
@@ -447,6 +463,7 @@ class grant(Resource):
 
     def post(self):
         data = request.get_json()
+        user_session_token = data.get("session_token")
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
@@ -462,7 +479,40 @@ class grant(Resource):
         user_id = data.get("user_id")
         user_grant_flag = data.get("grant_flag")
         target_grant_user = data.get("user_grant")
-        token = data["token"]
+        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+
+        # Ensure the directory exists before creating files
+        os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
+
+        # Load session data metadata from file
+        with open(session_file_path, "r") as file:
+            session_data = json.load(file)
+
+        # Verify user session token
+        server_sesion_token = session_data.get("session_token", 0)
+        if user_session_token != server_sesion_token:
+            response = {"status": 700, "message": "Session token mismatch"}
+            return jsonify(response)
+
+        # Check for the existence of the file and metadata
+        if not os.path.isfile(server_checkout_file_path) or not os.path.isfile(
+            aes_metadata_path
+        ):
+            response = {
+                "status": 704,
+                "message": "File or metadata not found on the server",
+            }
+
+        # Load AES key metadata from file
+        with open(aes_metadata_path, "r") as file:
+            aes_metadata = json.load(file)
+
+        # Check if user id matches
+        aes_user_id = aes_metadata.get("user_id", 0)
+        if aes_user_id != user_id:
+            response = {"status": 702, "message": "Access denied deleting file"}
+            return jsonify(response)
+
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
             response = {"status": 700, "message": "File not found on the server"}
@@ -512,6 +562,22 @@ class delete(Resource):
         aes_metadata_path = os.path.join(
             server_document_folder, filename + "_AES_Key.txt.json"
         )
+        user_session_token = data.get("session_token")
+
+        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+
+        # Ensure the directory exists before creating files
+        os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
+
+        # Load session data metadata from file
+        with open(session_file_path, "r") as file:
+            session_data = json.load(file)
+
+        # Verify user session token
+        server_sesion_token = session_data.get("session_token", 0)
+        if user_session_token != server_sesion_token:
+            response = {"status": 700, "message": "Session token mismatch"}
+            return jsonify(response)
 
         # Check for the existence of the file and metadata
         if not os.path.isfile(server_checkout_file_path) or not os.path.isfile(
