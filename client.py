@@ -91,7 +91,9 @@ def login():
 
         # create the statement
         statement = "statement"
-        signed_statement = sign_statement(statement, user_private_key_file)
+        signed_statement = sign_statement(
+            statement.encode("utf-8"), user_private_key_file
+        )
 
         body = {
             "user_id": user_id,
@@ -302,8 +304,22 @@ def logout(session_token):
     Send request to server with required parameters (action = 'logout') using post_request()
     The request body should contain the user-id, session-token
     """
+    body = {
+        "user_id": user_id,
+        "session_token": session_token,
+    }
 
-    return
+    server_response = post_request(
+        server_name, "delete", body, node_certificate, node_key
+    )
+
+    if server_response.json().get("status") == 200:
+        print("Successfully Logged out")
+
+    elif server_response.json().get("status") == 702:
+        print("Failed to log out")
+
+    return server_response.json()
 
 
 def print_main_menu():

@@ -43,7 +43,7 @@ def verify_statement(statement, signed_statement, user_public_key_file):
         # Verify the signature
         public_key.verify(
             signed_statement,
-            statement.encode("utf-8"),
+            statement,
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()),
                 salt_length=padding.PSS.MAX_LENGTH,
@@ -73,7 +73,7 @@ class login(Resource):
         # Information coming from the client
         user_id = data["user_id"]
         statement = data["statement"]
-        signed_statement = base64.b64decode(data["signed_statement"])
+        signed_statement = base64.b64decode(data["signed_statement"]).decode("utf-8")
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
@@ -168,7 +168,9 @@ class checkin(Resource):
         server_private_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
         )
-
+        client_checkin_file_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/client1/documents/checkin", filename
+        )
         session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
 
         # Ensure the directory exists before creating files
@@ -221,6 +223,9 @@ class checkin(Resource):
                 with open(aes_metadata_path, "w") as json_file:
                     json.dump(aes_metadata, json_file)
                 print(f"AES key, IV, and user id stored in {aes_metadata_path}")
+
+                # os.remove(client_checkin_file_path)
+                # print("File processed successfully")
 
                 success = True
 
@@ -279,6 +284,9 @@ class checkin(Resource):
                     with open(signature_file_path, "wb") as sign_file:
                         sign_file.write(signature)
                     print(f"Signature created and stored at {signature_file_path}")
+
+                    # os.remove(client_checkin_file_path)
+                    # print("File processed successfully")
 
                     response = {
                         "status": 200,
@@ -402,12 +410,7 @@ class checkout(Resource):
             try:
                 # Delete the specified file and its metadata
                 os.remove(server_checkout_file_path)
-
-                # Also delete any files that include the filename in their name
-                pattern = os.path.join(server_document_folder, filename + "*")
-                for file in glob.glob(pattern):
-                    os.remove(file)
-                    print("file processed successfully")
+                print("file processed successfully")
 
                 response = {
                     "status": 200,
@@ -662,56 +665,67 @@ class logout(Resource):
         1) 200 - Successfully logged out
         2) 700 - Failed to log out
         """
+        data = request.get_json()
+        user_id = data.get("user_id")
+        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+        server_document_folder = (
+            "/home/cs6238/Desktop/Project4/server/application/documents"
+        )
 
-        def post(self):
-            data = request.get_json()
-            token = data["token"]
+        user_session_token = data["token"]
+        # Ensure the directory exists before creating files
+        os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
 
-        # def logout(user_id):
-        #     server_document_folder = "/home/cs6238/Desktop/Project4/server/application/documents"
-        #     session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+        # Load session data metadata from file
+        with open(session_file_path, "r") as file:
+            session_data = json.load(file)
 
-        #     # Step 1: List all metadata files
-        #     metadata_files = [f for f in os.listdir(server_document_folder) if f.endswith("_AES_Key.txt.json")]
+        # Verify user session token
+        server_sesion_token = session_data.get("session_token", 0)
+        if user_session_token != server_sesion_token:
+            response = {"status": 702, "message": "Session token mismatch"}
+            return jsonify(response)
 
-        #     # Step 2: Read user_id from each metadata file and check if the corresponding file exists
-        #     for metadata_file in metadata_files:
-        #         with open(os.path.join(server_document_folder, metadata_file), 'r') as file:
-        #             metadata = json.load(file)
-        #         if metadata['user_id'] == user_id:
-        #             filename = metadata_file.replace("_AES_Key.txt.json", "")
-        #             if not os.path.isfile(os.path.join(server_document_folder, filename)):
-        #                 # Step 3: File not checked in, ask the user to check in
-        #                 return f"Please check in the file {filename} before logging out."
+        # Step 1: List all metadata files
+        metadata_files = [
+            f
+            for f in os.listdir(server_document_folder)
+            if f.endswith("_AES_Key.txt.json")
+        ]
 
-        #     # Step 4: All files checked in, remove user's session
-        #     if os.path.isfile(session_file_path):
-        #         with open(session_file_path, 'r') as file:
-        #             sessions = json.load(file)
-        #         # Remove the session for the user_id
-        #         if user_id in sessions:
-        #             del sessions[user_id]
-        #             with open(session_file_path, 'w') as file:
-        #                 json.dump(sessions, file)
-        #         else:
-        #             return "No active session for this user."
-        #     else:
-        #         return "Session file does not exist."
+        # Step 2: Read user_id from each metadata file and check if the corresponding file exists
+        for metadata_file in metadata_files:
+            with open(os.path.join(server_document_folder, metadata_file), "r") as file:
+                metadata = json.load(file)
+            if metadata["user_id"] == user_id:
+                filename = metadata_file.replace("_AES_Key.txt.json", "")
+                if not os.path.isfile(os.path.join(server_document_folder, filename)):
+                    # Step 3: File not checked in, ask the user to check in
+                    response = {
+                        "status": 702,
+                        "message": "Not all files were checked back in",
+                    }
 
-        #     return "Logout successful."
-        success = False
-        if success:
-            # Similar response format given below can be
-            # used for all the other functions
-            response = {
-                "status": 200,
-                "message": "Successfully logged out",
-            }
+        # Step 4: All files checked in, remove user's session
+        if os.path.isfile(session_file_path):
+            with open(session_file_path, "r") as file:
+                sessions = json.load(file)
+            # Remove the session for the user_id
+            if user_id in sessions:
+                del sessions[user_id]
+                with open(session_file_path, "w") as file:
+                    json.dump(sessions, file)
+            else:
+                response = {
+                    "status": 702,
+                    "message": "No session token found for this user",
+                }
         else:
             response = {
-                "status": 700,
-                "message": "Failed to log out",
+                "status": 702,
+                "message": "No session token found for this user",
             }
+        response = {"status": 200, "message": "Sucessfully logged out"}
         return jsonify(response)
 
 
