@@ -693,21 +693,26 @@ class logout(Resource):
             if f.endswith("_AES_Key.txt.json")
         ]
         print("test1")
-        print("metadata files: " + metadata_files)
+        print(metadata_files)
 
         # Step 2: Read user_id from each metadata file and check if the corresponding file exists
         for metadata_file in metadata_files:
             with open(os.path.join(server_document_folder, metadata_file), "r") as file:
                 metadata = json.load(file)
+                print("testa")
+                print(metadata)
             if metadata["user_id"] == user_id:
                 filename = metadata_file.replace("_AES_Key.txt.json", "")
+                print("testb")
+                print(filename)
                 if not os.path.isfile(os.path.join(server_document_folder, filename)):
                     # Step 3: File not checked in, ask the user to check in
                     response = {
                         "status": 700,
                         "message": "Not all files were checked back in",
                     }
-                    print("test 2")
+                    print("test2")
+                    return jsonify(response)
         # Step 4: All files checked in, remove user's session
         if os.path.isfile(session_file_path):
             with open(session_file_path, "r") as file:
@@ -723,11 +728,13 @@ class logout(Resource):
                     "message": "No session token found for this user",
                 }
                 print("test3")
+                return jsonify(response)
         else:
             response = {
                 "status": 700,
                 "message": "No session token found for this user",
             }
+            return jsonify(response)
         response = {"status": 200, "message": "Sucessfully logged out"}
         return jsonify(response)
 
