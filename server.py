@@ -715,6 +715,7 @@ class logout(Resource):
                         "message": "Not all files were checked back in",
                     }
                     return jsonify(response)
+
         # All files checked in, remove user's session
         if os.path.isfile(session_file_path):
             with open(session_file_path, "r") as file:
@@ -722,8 +723,9 @@ class logout(Resource):
 
             # Check if user_id is in the sessions and delete it if present
             if user_id in sessions:
+                print("test")
                 # delete matching content
-                with open(session_file_path, "r") as file:
+                with open(session_file_path, "w") as file:
                     for line in sessions:
                         # readlines() includes a newline character
                         if line.strip("\n") != user_id:
