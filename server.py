@@ -686,7 +686,7 @@ class logout(Resource):
             response = {"status": 700, "message": "Session token mismatch"}
             return jsonify(response)
 
-        # Step 1: List all metadata files
+        # List all metadata files
         metadata_files = [
             f
             for f in os.listdir(server_document_folder)
@@ -695,7 +695,7 @@ class logout(Resource):
         print("test1")
         print(metadata_files)
 
-        # Step 2: Read user_id from each metadata file and check if the corresponding file exists
+        # Read user_id from each metadata file and check if the corresponding file exists
         for metadata_file in metadata_files:
             with open(os.path.join(server_document_folder, metadata_file), "r") as file:
                 metadata = json.load(file)
@@ -706,24 +706,27 @@ class logout(Resource):
                 print("testb")
                 print(filename)
                 if not os.path.isfile(os.path.join(server_document_folder, filename)):
-                    # Step 3: File not checked in, ask the user to check in
+                    # File not checked in, ask the user to check in
                     response = {
                         "status": 700,
                         "message": "Not all files were checked back in",
                     }
                     print("test2")
                     return jsonify(response)
-        # Step 4: All files checked in, remove user's session
+        # All files checked in, remove user's session
         if os.path.isfile(session_file_path):
             with open(session_file_path, "r") as file:
                 sessions = json.load(file)
-            # Remove the session for the user_id
+
             # Check if user_id is in the sessions and delete it if present
             if user_id in sessions:
                 del sessions[user_id]
                 # Write the updated JSON data back to the file
                 with open(session_file_path, "w") as file:
-                    json.dump(sessions, file)
+                    json.dump(
+                        sessions, file, indent=4
+                    )  # Optionally make the output formatted
+
             else:
                 response = {
                     "status": 200,
