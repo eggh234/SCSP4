@@ -91,9 +91,7 @@ def login():
 
         # create the statement
         statement = "statement"
-        signed_statement = sign_statement(
-            statement.encode("utf-8"), user_private_key_file
-        )
+        signed_statement = sign_statement(statement, user_private_key_file)
 
         body = {
             "user_id": user_id,

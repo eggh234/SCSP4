@@ -43,7 +43,7 @@ def verify_statement(statement, signed_statement, user_public_key_file):
         # Verify the signature
         public_key.verify(
             signed_statement,
-            statement,
+            statement.encode("utf-8"),
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()),
                 salt_length=padding.PSS.MAX_LENGTH,
@@ -73,7 +73,7 @@ class login(Resource):
         # Information coming from the client
         user_id = data["user_id"]
         statement = data["statement"]
-        signed_statement = base64.b64decode(data["signed_statement"]).decode("utf-8")
+        signed_statement = base64.b64decode(data["signed_statement"])
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
