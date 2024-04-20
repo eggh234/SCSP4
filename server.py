@@ -151,6 +151,7 @@ class checkin(Resource):
                     "iv": base64.b64encode(aes_iv).decode("utf-8"),
                     "security_flag": security_flag,
                     "user_id": user_id,  # Adding the user ID
+                    "grant_code": 3,
                 }
                 with open(aes_metadata_path, "w") as json_file:
                     json.dump(aes_metadata, json_file)
@@ -190,6 +191,7 @@ class checkin(Resource):
                     aes_metadata = {
                         "user_id": user_id,  # Adding the user ID
                         "security_flag": security_flag,
+                        "grant_code": 3,
                     }
                     with open(aes_metadata_path, "w") as json_file:
                         json.dump(aes_metadata, json_file)
@@ -382,8 +384,41 @@ class grant(Resource):
 
     def post(self):
         data = request.get_json()
+        server_document_folder = (
+            "/home/cs6238/Desktop/Project4/server/application/documents"
+        )
+
+        filename = data.get("document_id")
+
+        aes_metadata_path = os.path.join(
+            server_document_folder, filename + "_AES_Key.txt.json"
+        )
+
+        server_checkout_file_path = os.path.join(server_document_folder, filename)
+
+        user_id = data.get("user_id")
+        user_grant_flag = data.get("grant_flag")
         token = data["token"]
+        # Checks for the existence of the necessary files
+        if not os.path.isfile(server_checkout_file_path):
+            response = {"status": 704, "message": "File not found on the server"}, 704
+
+        if not os.path.isfile(aes_metadata_path):
+            response = {"status": 704, "message": "Encryption metadata not found"}, 704
+
+        # Load AES key metadata from file
+        with open(aes_metadata_path, "r") as file:
+            aes_metadata = json.load(file)
+
+        # Verify user ID
+        if aes_metadata["user_id"] != user_id:
+            response = {"status": 702, "message": "Access denied"}, 702
+        # Read the grant flag from the metadata
+        actual_grant_flag = aes_metadata.get("grant_flag", 0)
         success = False
+
+        # logic here
+
         if success:
             # Similar response format given below can be
             # used for all the other functions

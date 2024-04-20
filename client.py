@@ -257,8 +257,27 @@ def grant(session_token):
      - time duration (in seconds) for which access is granted
     Send request to server with required parameters (action = 'grant') using post_request()
     """
+    # Get document ID from user
+    file_name = input("Please enter the file name: ")
+    print(file_name)
 
-    return
+    print("Grant Permission Options:")
+    print("1 = Checkin")
+    print("2 = Checkout")
+    print("3 = Checkin + Checkout")
+    grant_code = input("Please input grant permission number:")
+    body = {"document_id": file_name, "user_id": user_id, "grant_code": grant_code}
+
+    if server_response.json().get("status") == 200:
+        print("Successfully granted access")
+
+    elif server_response.json().get("status") == 702:
+        print("Access denied to grant access")
+
+    elif server_response.json().get("status") == 700:
+        print("Other failures")
+
+    return server_response.json()
 
 
 def delete(session_token):
@@ -268,7 +287,7 @@ def delete(session_token):
     using post_request().
     """
 
-    return
+    return server_response.json()
 
 
 def logout(session_token):
