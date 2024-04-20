@@ -473,11 +473,6 @@ class checkout(Resource):
             try:
                 # Delete the specified file and its metadata
                 os.remove(server_checkout_file_path)
-
-                # Also delete any files that include the filename in their name
-                pattern = os.path.join(server_document_folder, filename + "*")
-                for file in glob.glob(pattern):
-                    os.remove(file)
                 print("File processed successfully")
 
                 response = {
