@@ -31,24 +31,35 @@ class welcome(Resource):
         return "Welcome to the secure shared server!"
 
 
-def verify_statement(statement, signed_statement, user_public_key_file):
-    with open(user_public_key_file, "rb") as key_file:
+def verify_statement(statement, signed_statement_base64, user_public_key_file):
+    print("Received signed-statement (base64):", signed_statement_base64)
+    signed_statement = base64.b64decode(signed_statement_base64)
+    print("Decoded signed statement (bytes):", signed_statement)
 
+    print("Original statement:", statement)
+    encoded_statement = statement.encode("utf-8")
+    print("Encoded statement (to be verified):", encoded_statement)
+
+    with open(user_public_key_file, "rb") as key_file:
+        print("Loading public key from file:", user_public_key_file)
         public_key = serialization.load_pem_public_key(
             key_file.read(), backend=default_backend()
         )
+        print("Public key loaded successfully.")
+
     try:
         public_key.verify(
             signed_statement,
-            statement.encode(),
+            encoded_statement,
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
             ),
             hashes.SHA256(),
         )
+        print("Verification successful.")
         return True
-
-    except:
+    except Exception as e:
+        print("Verification failed:", str(e))
         return False
 
 
@@ -66,8 +77,8 @@ class login(Resource):
         """
 
         # Information coming from the client
-        user_id = data["user-id"]
-        statement = data["statement"]
+        user_id = data.get("user-id")
+        statement = data.get("statement")
         signed_statement = base64.b64decode(data["signed-statement"])
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
@@ -80,12 +91,11 @@ class login(Resource):
             + user_id
             + ".pub"
         )
+        encoded_statement = statement.encode("utf-8")
 
-        success = verify_statement(statement, signed_statement, user_public_key_file)
-
-        print(user_id)
-        print(statement)
-        print(signed_statement)
+        success = verify_statement(
+            encoded_statement, signed_statement, user_public_key_file
+        )
 
         if success:
 
