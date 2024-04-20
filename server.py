@@ -461,6 +461,7 @@ class delete(Resource):
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
         server_checkout_file_path = os.path.join(server_document_folder, filename)
+
         aes_metadata_path = os.path.join(
             server_document_folder, filename + "_AES_Key.txt.json"
         )

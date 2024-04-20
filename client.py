@@ -297,7 +297,7 @@ def delete(session_token):
     Send request to server with required parameters (action = 'delete')
     using post_request().
     """
-    file_name = input("Please enter file name to delete")
+    file_name = input("Please enter file name to delete: ")
     body = {
         "document_id": file_name,
         "user_id": user_id,
