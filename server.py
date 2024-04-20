@@ -97,17 +97,19 @@ class login(Resource):
                         # Verify user ID
                         meta_user_id = session_data.get("user_id", 0)
                         if meta_user_id == user_id:
-                            return jsonify(
-                                {
-                                    "status": 200,
-                                    "message": "Login Successful, Token Found",
-                                }
-                            )
+                            response = {
+                                "status": 200,
+                                "message": "Login Successful, Token Found",
+                                "session_token": session_token,
+                            }
                     except json.JSONDecodeError:
                         # Handle empty or invalid JSON
-                        print(
-                            "JSON decoding error or empty file, proceeding to create a new token."
-                        )
+                        print("Invalid session token value")
+                        response = {
+                            "status": 700,
+                            "message": "Login Failed",
+                            "session_token": "INVALID",
+                        }
 
             # Generate a new session token if not found or if file doesn't exist
             session_token = secrets.token_urlsafe(5)
