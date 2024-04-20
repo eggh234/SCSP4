@@ -47,18 +47,19 @@ def post_request(server_name, action, body, node_certificate, node_key):
 def sign_statement(statement, user_private_key_file):
     # sign the statement withe the users private key
     with open(user_private_key_file, "rb") as key_file:
-
-        user_private_key_file = serialization.load_pem_private_key(
-            key_file.read(), password=None, backend=default_backend()
+        private_key = serialization.load_pem_private_key(
+            key_file.read(),
+            password=None,
         )
-    signed_statement = user_private_key_file.sign(
-        statement.encode("utf-8"),
-        padding.PSS(
-            mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
-        ),
-        hashes.SHA256(),
-    )
-    return signed_statement
+
+        signature = private_key.sign(
+            statement,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256(),
+        )
+    return signature
 
 
 def login():
@@ -93,9 +94,9 @@ def login():
         signed_statement = sign_statement(statement, user_private_key_file)
 
         body = {
-            "user-id": user_id,
+            "user_id": user_id,
             "statement": statement,
-            "signed-statement": base64.b64encode(signed_statement).decode("utf8"),
+            "signed_statement": base64.b64encode(signed_statement).decode("utf8"),
         }
 
         server_response = post_request(
