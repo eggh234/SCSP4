@@ -111,22 +111,22 @@ class login(Resource):
                             "message": "Login Failed",
                             "session_token": "INVALID",
                         }
+            else:
+                # Generate a new session token if not found or if file doesn't exist
+                new_session_token = secrets.token_urlsafe(5)
 
-            # Generate a new session token if not found or if file doesn't exist
-            new_session_token = secrets.token_urlsafe(5)
+                # Write or update the session file with new user ID and token
+                session_data = {"user_id": user_id, "session_token": new_session_token}
+                with open(session_file_path, "w") as json_file:
+                    json.dump(session_data, json_file)
 
-            # Write or update the session file with new user ID and token
-            session_data = {"user_id": user_id, "session_token": new_session_token}
-            with open(session_file_path, "w") as json_file:
-                json.dump(session_data, json_file)
+                print(f"user_id and session_token stored at {session_file_path}")
 
-            print(f"user_id and session_token stored at {session_file_path}")
-
-            response = {
-                "status": 200,
-                "message": "Login Successful, Token Generated",
-                "session_token": session_token,
-            }
+                response = {
+                    "status": 200,
+                    "message": "Login Successful, Token Generated",
+                    "session_token": session_token,
+                }
         else:
             response = {
                 "status": 700,
