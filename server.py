@@ -150,12 +150,13 @@ class checkin(Resource):
         filename = data.get("document_id")
         client_file_data = data.get("file_data")
         user_id = data.get("user_id")
-        session_token = data.get("session_token")
+        user_session_token = data.get("session_token")
         response = {}
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
         server_checkin_file_path = os.path.join(server_document_folder, filename)
+
         aes_metadata_path = os.path.join(
             server_document_folder, filename + "_AES_Key.txt.json"
         )
@@ -168,9 +169,13 @@ class checkin(Resource):
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
 
+        # Load AES key metadata from file
+        with open(session_file_path, "r") as file:
+            session_data = json.load(file)
+
         # Verify user session token
-        server_sesion_token = aes_metadata.get("session_token", 0)
-        if session_token != server_sesion_token:
+        server_sesion_token = session_data.get("session_token", 0)
+        if user_session_token != server_sesion_token:
             response = {"status": 700, "message": "Session token mismatch"}
             return jsonify(response)
 
