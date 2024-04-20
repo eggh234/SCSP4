@@ -108,6 +108,7 @@ class login(Resource):
                                 "message": "Login Successful, Token Found",
                                 "session_token": session_token,
                             }
+                            print("test1")
                             return jsonify(response)
 
                     except json.JSONDecodeError:
@@ -118,6 +119,7 @@ class login(Resource):
                             "message": "Login Failed",
                             "session_token": "INVALID",
                         }
+                        print("test2")
                         return jsonify(response)
             else:
                 # Generate a new session token if not found or if file doesn't exist
