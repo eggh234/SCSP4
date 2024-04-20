@@ -20,6 +20,7 @@ import shutil
 import os
 import base64
 import glob
+import secrets
 
 secure_shared_service = Flask(__name__)
 api = Api(secure_shared_service)
@@ -68,7 +69,10 @@ class login(Resource):
         user_id = data["user-id"]
         statement = data["statement"]
         signed_statement = base64.b64decode(data["signed-statement"])
-
+        server_document_folder = (
+            "/home/cs6238/Desktop/Project4/server/application/documents"
+        )
+        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
         # complete the full path of the user public key filename
         # /home/cs6238/Desktop/Project4/server/application/userpublickeys/{user_public_key_filename}
         user_public_key_file = (
@@ -80,10 +84,44 @@ class login(Resource):
         success = verify_statement(statement, signed_statement, user_public_key_file)
 
         if success:
-            session_token = "ABCD"
+
+            # Ensure the directory exists
+            if not os.path.exists(server_document_folder):
+                os.makedirs(server_document_folder, exist_ok=True)
+
+            # Check if the session file already exists and contains the user_id
+            if os.path.isfile(session_file_path):
+                with open(session_file_path, "r") as file:
+                    try:
+                        session_data = json.load(file)
+                        # Verify user ID
+                        meta_user_id = session_data.get("user_id", 0)
+                        if meta_user_id == user_id:
+                            return jsonify(
+                                {
+                                    "status": 200,
+                                    "message": "Login Successful, Token Found",
+                                }
+                            )
+                    except json.JSONDecodeError:
+                        # Handle empty or invalid JSON
+                        print(
+                            "JSON decoding error or empty file, proceeding to create a new token."
+                        )
+
+            # Generate a new session token if not found or if file doesn't exist
+            session_token = secrets.token_urlsafe(5)
+
+            # Write or update the session file with new user ID and token
+            session_data = {"user_id": user_id, "session_token": session_token}
+            with open(session_file_path, "w") as json_file:
+                json.dump(session_data, json_file)
+
+            print(f"user_id and session_token stored at {session_file_path}")
+
             response = {
                 "status": 200,
-                "message": "Login Successful",
+                "message": "Login Successful, Token Generated",
                 "session_token": session_token,
             }
         else:
@@ -406,44 +444,29 @@ class grant(Resource):
         token = data["token"]
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
-            response = {"status": 704, "message": "File not found on the server"}
+            response = {"status": 700, "message": "File not found on the server"}
 
         if not os.path.isfile(aes_metadata_path):
-            response = {"status": 704, "message": "Metadata not found"}
+            response = {"status": 700, "message": "Metadata not found"}
 
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:
             aes_metadata = json.load(file)
 
-        # Verify user ID
-        if aes_metadata["user_id"] != user_id:
-            response = {"status": 702, "message": "Access denied"}
-        # Read the grant flag from the metadata
+        aes_user_id = aes_metadata.get("user_id", 0)
+        if aes_user_id != user_id:
+            response = {"status": 702, "message": "Access denied to grant access"}
+            return jsonify(response)
 
+        # Read the grant flag from the metadata
         actual_grant_flag = aes_metadata.get("grant_flag", 0)
-        success = False
+        if actual_grant_flag == 1 or actual_grant_flag == 2:
+            response = {"status": 702, "message": "Access denied to grant access"}
+            return jsonify(response)
 
         if actual_grant_flag == 3:
             print("3")
 
-        elif actual_grant_flag == 2:
-            print("2")
-
-        elif actual_grant_flag == 1:
-            print("1")
-
-        if success:
-            # Similar response format given below can be
-            # used for all the other functions
-            response = {
-                "status": 200,
-                "message": "Successfully granted access",
-            }
-        else:
-            response = {
-                "status": 702,
-                "message": "Access denied to grant access",
-            }
         return jsonify(response)
 
 
@@ -482,12 +505,11 @@ class delete(Resource):
         with open(aes_metadata_path, "r") as file:
             aes_metadata = json.load(file)
 
-        # Verify user ID
-        if aes_metadata["user_id"] != user_id:
-            response = {
-                "status": 702,
-                "message": "Access denied deleting file",
-            }
+        # Check if user id matches
+        aes_user_id = aes_metadata.get("user_id", 0)
+        if aes_user_id != user_id:
+            response = {"status": 702, "message": "Access denied deleting file"}
+            return jsonify(response)
 
         try:
             # Delete the specified file and its metadata
