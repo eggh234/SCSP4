@@ -308,7 +308,7 @@ def logout(session_token):
     }
 
     server_response = post_request(
-        server_name, "delete", body, node_certificate, node_key
+        server_name, "logout", body, node_certificate, node_key
     )
 
     if server_response.json().get("status") == 200:

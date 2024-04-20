@@ -672,7 +672,7 @@ class logout(Resource):
         )
         session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
 
-        user_session_token = data["token"]
+        user_session_token = data.get("session_token")
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
 
@@ -683,7 +683,7 @@ class logout(Resource):
         # Verify user session token
         server_sesion_token = session_data.get("session_token", 0)
         if user_session_token != server_sesion_token:
-            response = {"status": 702, "message": "Session token mismatch"}
+            response = {"status": 700, "message": "Session token mismatch"}
             return jsonify(response)
 
         # Step 1: List all metadata files
@@ -692,6 +692,8 @@ class logout(Resource):
             for f in os.listdir(server_document_folder)
             if f.endswith("_AES_Key.txt.json")
         ]
+        print("test1")
+        print("metadata files: " + metadata_files)
 
         # Step 2: Read user_id from each metadata file and check if the corresponding file exists
         for metadata_file in metadata_files:
@@ -702,10 +704,10 @@ class logout(Resource):
                 if not os.path.isfile(os.path.join(server_document_folder, filename)):
                     # Step 3: File not checked in, ask the user to check in
                     response = {
-                        "status": 702,
+                        "status": 700,
                         "message": "Not all files were checked back in",
                     }
-
+                    print("test 2")
         # Step 4: All files checked in, remove user's session
         if os.path.isfile(session_file_path):
             with open(session_file_path, "r") as file:
@@ -717,12 +719,13 @@ class logout(Resource):
                     json.dump(sessions, file)
             else:
                 response = {
-                    "status": 702,
+                    "status": 700,
                     "message": "No session token found for this user",
                 }
+                print("test3")
         else:
             response = {
-                "status": 702,
+                "status": 700,
                 "message": "No session token found for this user",
             }
         response = {"status": 200, "message": "Sucessfully logged out"}
