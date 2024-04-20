@@ -110,10 +110,10 @@ class login(Resource):
                         )
 
             # Generate a new session token if not found or if file doesn't exist
-            session_token = secrets.token_urlsafe(5)
+            user_session_token = secrets.token_urlsafe(5)
 
             # Write or update the session file with new user ID and token
-            session_data = {"user_id": user_id, "session_token": session_token}
+            session_data = {"user_id": user_id, "session_token": user_session_token}
             with open(session_file_path, "w") as json_file:
                 json.dump(session_data, json_file)
 
@@ -122,7 +122,7 @@ class login(Resource):
             response = {
                 "status": 200,
                 "message": "Login Successful, Token Generated",
-                "session_token": session_token,
+                "session_token": user_session_token,
             }
         else:
             response = {
