@@ -40,16 +40,14 @@ def verify_statement(statement, signed_statement, user_public_key_file):
     try:
         public_key.verify(
             signed_statement,
-            statement,
+            statement.encode(),
             padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH,
+                mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
             ),
             hashes.SHA256(),
         )
-        print("Signature verified")
-
         return True
+
     except:
         return False
 
@@ -71,10 +69,7 @@ class login(Resource):
         user_id = data["user-id"]
         statement = data["statement"]
         signed_statement = base64.b64decode(data["signed-statement"])
-        server_document_folder = (
-            "/home/cs6238/Desktop/Project4/server/application/documents"
-        )
-        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+
         # complete the full path of the user public key filename
         # /home/cs6238/Desktop/Project4/server/application/userpublickeys/{user_public_key_filename}
         user_public_key_file = (
@@ -86,49 +81,12 @@ class login(Resource):
         success = verify_statement(statement, signed_statement, user_public_key_file)
 
         if success:
-
-            # Ensure the directory exists
-            if not os.path.exists(server_document_folder):
-                os.makedirs(server_document_folder, exist_ok=True)
-
-            # Check if the session file already exists and contains the user_id
-            if os.path.isfile(session_file_path):
-                with open(session_file_path, "r") as file:
-                    try:
-                        session_data = json.load(file)
-                        # Verify user ID
-                        meta_user_id = session_data.get("user_id", 0)
-                        session_token = session_data.get("session_token", 0)
-                        if meta_user_id == user_id:
-                            response = {
-                                "status": 200,
-                                "message": "Login Successful, Token Found",
-                                "session_token": session_token,
-                            }
-                    except json.JSONDecodeError:
-                        # Handle empty or invalid JSON
-                        print("Invalid session token value")
-                        response = {
-                            "status": 700,
-                            "message": "Login Failed",
-                            "session_token": "INVALID",
-                        }
-            else:
-                # Generate a new session token if not found or if file doesn't exist
-                new_session_token = secrets.token_urlsafe(5)
-
-                # Write or update the session file with new user ID and token
-                session_data = {"user_id": user_id, "session_token": new_session_token}
-                with open(session_file_path, "w") as json_file:
-                    json.dump(session_data, json_file)
-
-                print(f"user_id and session_token stored at {session_file_path}")
-
-                response = {
-                    "status": 200,
-                    "message": "Login Successful, Token Generated",
-                    "session_token": session_token,
-                }
+            session_token = "ABCD"
+            response = {
+                "status": 200,
+                "message": "Login Successful",
+                "session_token": session_token,
+            }
         else:
             response = {
                 "status": 700,
