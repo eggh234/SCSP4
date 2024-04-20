@@ -45,7 +45,6 @@ def post_request(server_name, action, body, node_certificate, node_key):
 
 
 def sign_statement(statement, user_private_key_file):
-
     # Load the client's private key for signing the file data
     with open(user_private_key_file, "rb") as key_file:
         private_key = serialization.load_pem_private_key(
@@ -56,7 +55,7 @@ def sign_statement(statement, user_private_key_file):
 
         # Sign the file data using the private key
         signed_statement = private_key.sign(
-            statement,
+            statement.encode("utf-8"),  # Encode the statement to bytes
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()),
                 salt_length=padding.PSS.MAX_LENGTH,
