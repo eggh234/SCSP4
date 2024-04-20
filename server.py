@@ -726,10 +726,13 @@ class logout(Resource):
             with open(session_file_path, "w") as file:
                 for line in sessions:
                     # readlines() includes a newline character
-                    if line.strip("\n") != user_id:
+                    if (
+                        line.strip("\n")
+                        != "user_id" + user_id + "session_token" + user_session_token
+                    ):
                         file.write(line)
             print(f"Session for user ID {user_id} has been deleted.")
-            {"status": 200, "message": "Sucessfully logged out"}
+            response = {"status": 200, "message": "Sucessfully logged out"}
             return jsonify(response)
         else:
             response = {
