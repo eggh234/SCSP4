@@ -699,26 +699,21 @@ class logout(Resource):
             for f in os.listdir(server_document_folder)
             if f.endswith("_AES_Key.txt.json")
         ]
-        print("test1")
-        print(metadata_files)
 
         # Read user_id from each metadata file and check if the corresponding file exists
         for metadata_file in metadata_files:
             with open(os.path.join(server_document_folder, metadata_file), "r") as file:
                 metadata = json.load(file)
-                print("testa")
-                print(metadata)
+
             if metadata["user_id"] == user_id:
                 filename = metadata_file.replace("_AES_Key.txt.json", "")
-                print("testb")
-                print(filename)
+
                 if not os.path.isfile(os.path.join(server_document_folder, filename)):
                     # File not checked in, ask the user to check in
                     response = {
                         "status": 700,
                         "message": "Not all files were checked back in",
                     }
-                    print("test2")
                     return jsonify(response)
         # All files checked in, remove user's session
         if os.path.isfile(session_file_path):
@@ -727,17 +722,18 @@ class logout(Resource):
 
             # Check if user_id is in the sessions and delete it if present
             if user_id in sessions:
-                del sessions[user_id]
-                # Write the updated JSON data back to the file
-                with open(session_file_path, "w") as file:
-                    json.dump(sessions, file, indent=4)
+                # delete matching content
+                with open(session_file_path, "r") as file:
+                    for line in sessions:
+                        # readlines() includes a newline character
+                        if line.strip("\n") != user_id:
+                            file.write(line)
                 print(f"Session for user ID {user_id} has been deleted.")
             else:
                 response = {
                     "status": 200,
                     "message": "No session token found for this user",
                 }
-                print("test3")
                 {"status": 200, "message": "Sucessfully logged out"}
                 return jsonify(response)
         else:
