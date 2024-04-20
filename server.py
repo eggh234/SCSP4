@@ -465,14 +465,19 @@ class delete(Resource):
         aes_metadata_path = os.path.join(
             server_document_folder, filename + "_AES_Key.txt.json"
         )
-
-        # Check for the existence of the file and metadata
-        if not os.path.isfile(server_checkout_file_path) or not os.path.isfile(
-            aes_metadata_path
-        ):
+        try:
+            # Check for the existence of the file and metadata
+            if not os.path.isfile(server_checkout_file_path) or not os.path.isfile(
+                aes_metadata_path
+            ):
+                response = {
+                    "status": 704,
+                    "message": "File or metadata not found on the server",
+                }
+        except OSError as e:
             response = {
                 "status": 704,
-                "message": "File or metadata not found on the server",
+                "message": "Error accessing file or metadata: " + str(e),
             }
 
         # Load AES key metadata from file
