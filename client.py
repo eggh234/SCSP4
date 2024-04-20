@@ -53,7 +53,7 @@ def sign_statement(statement, user_private_key_file):
         )
 
         signature = private_key.sign(
-            statement,
+            statement.encode("utf-8"),
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
             ),

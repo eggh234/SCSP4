@@ -667,10 +667,10 @@ class logout(Resource):
         """
         data = request.get_json()
         user_id = data.get("user_id")
-        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
+        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
 
         user_session_token = data["token"]
         # Ensure the directory exists before creating files
