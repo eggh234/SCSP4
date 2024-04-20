@@ -132,13 +132,14 @@ class login(Resource):
                     "message": "Login Successful, Token Generated",
                     "session_token": new_session_token,
                 }
+                return jsonify(response)
         else:
             response = {
                 "status": 700,
                 "message": "Login Failed",
                 "session_token": "INVALID",
             }
-        return jsonify(response)
+            return jsonify(response)
 
 
 class checkin(Resource):
