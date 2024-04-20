@@ -292,7 +292,8 @@ class checkout(Resource):
             aes_metadata = json.load(file)
 
         # Verify user ID
-        if aes_metadata["user_id"] != user_id:
+        aes_user_id = aes_metadata.get("user_id", 0)
+        if aes_user_id != user_id:
             response = {"status": 702, "message": "Access denied"}, 702
         # Read the security flag from the metadata
         security_flag = aes_metadata.get("security_flag", 0)
