@@ -40,14 +40,16 @@ def verify_statement(statement, signed_statement, user_public_key_file):
     try:
         public_key.verify(
             signed_statement,
-            statement.encode(),
+            statement,
             padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH,
             ),
             hashes.SHA256(),
         )
-        return True
+        print("Signature verified")
 
+        return True
     except:
         return False
 
@@ -531,12 +533,12 @@ class grant(Resource):
 
         # Read the grant flag from the metadata
         actual_grant_flag = aes_metadata.get("grant_flag", 0)
-        if actual_grant_flag == 1 or actual_grant_flag == 2:
-            response = {"status": 702, "message": "Access denied to grant access"}
-            return jsonify(response)
-
+        if actual_grant_flag == 1:
+            print("checkin only")
+        if actual_grant_flag == 2:
+            print("checkout only")
         if actual_grant_flag == 3:
-            print("3")
+            print("both")
 
         return jsonify(response)
 
