@@ -141,6 +141,7 @@ class checkin(Resource):
     Expected response status codes:
     1) 200 - Document Successfully checked in
     2) 702 - Access denied checking in
+    3) 700 - Other failures
     """
 
     def post(self):
@@ -149,6 +150,7 @@ class checkin(Resource):
         filename = data.get("document_id")
         client_file_data = data.get("file_data")
         user_id = data.get("user_id")
+        session_token = data.get("session_token")
         response = {}
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
@@ -160,6 +162,17 @@ class checkin(Resource):
         server_private_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
         )
+
+        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+
+        # Ensure the directory exists before creating files
+        os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
+
+        # Verify user session token
+        server_sesion_token = aes_metadata.get("session_token", 0)
+        if session_token != server_sesion_token:
+            response = {"status": 700, "message": "Session token mismatch"}
+            return jsonify(response)
 
         if security_flag == 1:
             try:

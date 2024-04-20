@@ -178,6 +178,9 @@ def checkin(session_token):
     elif server_response.json().get("status") == 702:
         print("Access denied checking in")
 
+    elif server_response.json().get("status") == 700:
+        print("Other errors")
+
     return server_response.json()
 
 
@@ -191,6 +194,7 @@ def checkout(session_token):
     body = {
         "document_id": file_name,
         "user_id": user_id,
+        "session_token": session_token,
     }
     server_response = post_request(
         server_name, "checkout", body, node_certificate, node_key
@@ -239,6 +243,7 @@ def grant(session_token):
         "user_id": user_id,
         "grant_code": grant_code,
         "user_grant": user_grant,
+        "session_token": session_token,
     }
 
     server_response = post_request(
@@ -267,6 +272,7 @@ def delete(session_token):
     body = {
         "document_id": file_name,
         "user_id": user_id,
+        "session_token": session_token,
     }
 
     server_response = post_request(
