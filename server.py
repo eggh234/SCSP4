@@ -721,31 +721,22 @@ class logout(Resource):
             with open(session_file_path, "r") as file:
                 sessions = json.load(file)
 
-            # Check if user_id is in the sessions and delete it if present
-            if user_id in sessions:
-                print("test")
-                # delete matching content
-                with open(session_file_path, "w") as file:
-                    for line in sessions:
-                        # readlines() includes a newline character
-                        if line.strip("\n") != user_id:
-                            file.write(line)
-                print(f"Session for user ID {user_id} has been deleted.")
-            else:
-                response = {
-                    "status": 200,
-                    "message": "No session token found for this user",
-                }
-                {"status": 200, "message": "Sucessfully logged out"}
-                return jsonify(response)
+            print("test")
+            # delete matching content
+            with open(session_file_path, "w") as file:
+                for line in sessions:
+                    # readlines() includes a newline character
+                    if line.strip("\n") != user_id:
+                        file.write(line)
+            print(f"Session for user ID {user_id} has been deleted.")
+            {"status": 200, "message": "Sucessfully logged out"}
+            return jsonify(response)
         else:
             response = {
                 "status": 700,
                 "message": "No session token found for this user",
             }
             return jsonify(response)
-        response = {"status": 200, "message": "Sucessfully logged out"}
-        return jsonify(response)
 
 
 api.add_resource(welcome, "/")
