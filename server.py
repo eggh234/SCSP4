@@ -724,10 +724,11 @@ class logout(Resource):
                     json.dump(sessions, file)
             else:
                 response = {
-                    "status": 700,
+                    "status": 200,
                     "message": "No session token found for this user",
                 }
                 print("test3")
+                {"status": 200, "message": "Sucessfully logged out"}
                 return jsonify(response)
         else:
             response = {
