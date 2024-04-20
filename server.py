@@ -21,6 +21,7 @@ import os
 import base64
 import glob
 import secrets
+import re
 
 secure_shared_service = Flask(__name__)
 api = Api(secure_shared_service)
@@ -729,10 +730,8 @@ class logout(Resource):
                 del sessions[user_id]
                 # Write the updated JSON data back to the file
                 with open(session_file_path, "w") as file:
-                    json.dump(
-                        sessions, file, indent=4
-                    )  # Optionally make the output formatted
-
+                    json.dump(sessions, file, indent=4)
+                print(f"Session for user ID {user_id} has been deleted.")
             else:
                 response = {
                     "status": 200,
