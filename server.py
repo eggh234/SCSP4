@@ -19,6 +19,7 @@ import json
 import shutil
 import os
 import base64
+import glob
 
 secure_shared_service = Flask(__name__)
 api = Api(secure_shared_service)
@@ -398,13 +399,14 @@ class grant(Resource):
 
         user_id = data.get("user_id")
         user_grant_flag = data.get("grant_flag")
+        target_grant_user = data.get("user_grant")
         token = data["token"]
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
             response = {"status": 704, "message": "File not found on the server"}, 704
 
         if not os.path.isfile(aes_metadata_path):
-            response = {"status": 704, "message": "Encryption metadata not found"}, 704
+            response = {"status": 704, "message": "Metadata not found"}, 704
 
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:
@@ -414,10 +416,18 @@ class grant(Resource):
         if aes_metadata["user_id"] != user_id:
             response = {"status": 702, "message": "Access denied"}, 702
         # Read the grant flag from the metadata
+
         actual_grant_flag = aes_metadata.get("grant_flag", 0)
         success = False
 
-        # logic here
+        if actual_grant_flag == 3:
+            print("3")
+
+        elif actual_grant_flag == 2:
+            print("2")
+
+        elif actual_grant_flag == 1:
+            print("1")
 
         if success:
             # Similar response format given below can be
@@ -439,26 +449,61 @@ class delete(Resource):
     Expected response status codes:
     1) 200 - Successfully deleted the file
     2) 702 - Access denied deleting file
-    3) 704 - Delete failed since file not found on the server
+    3) 704 - File or metadata not found on the server
     4) 700 - Other failures
     """
 
     def post(self):
         data = request.get_json()
-        token = data["token"]
-        success = False
-        if success:
-            # Similar response format given below can be
-            # used for all the other functions
+        filename = data.get("document_id")
+        user_id = data.get("user_id")
+        server_document_folder = (
+            "/home/cs6238/Desktop/Project4/server/application/documents"
+        )
+        server_checkout_file_path = os.path.join(server_document_folder, filename)
+        aes_metadata_path = os.path.join(
+            server_document_folder, filename + "_AES_Key.txt.json"
+        )
+
+        # Check for the existence of the file and metadata
+        if not os.path.isfile(server_checkout_file_path) or not os.path.isfile(
+            aes_metadata_path
+        ):
             response = {
-                "status": 200,
-                "message": "Successfully deleted the file",
+                "status": 704,
+                "message": "File or metadata not found on the server",
             }
-        else:
+
+        # Load AES key metadata from file
+        with open(aes_metadata_path, "r") as file:
+            aes_metadata = json.load(file)
+
+        # Verify user ID
+        if aes_metadata["user_id"] != user_id:
             response = {
                 "status": 702,
                 "message": "Access denied deleting file",
             }
+
+        try:
+            # Delete the specified file and its metadata
+            os.remove(server_checkout_file_path)
+            os.remove(aes_metadata_path)
+
+            # Also delete any files that include the filename in their name
+            pattern = os.path.join(server_document_folder, filename + "*")
+            for file in glob.glob(pattern):
+                os.remove(file)
+            response = {
+                "status": 200,
+                "message": "Successfully deleted the file and associated data",
+            }
+        except Exception as e:
+            response = {
+                "status": 700,
+                "message": "Failed to delete the files: " + str(e),
+            }
+
         return jsonify(response)
 
 

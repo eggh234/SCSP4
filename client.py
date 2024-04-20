@@ -266,7 +266,18 @@ def grant(session_token):
     print("2 = Checkout")
     print("3 = Checkin + Checkout")
     grant_code = input("Please input grant permission number:")
-    body = {"document_id": file_name, "user_id": user_id, "grant_code": grant_code}
+    user_grant = input("Please input user to grant to")
+
+    body = {
+        "document_id": file_name,
+        "user_id": user_id,
+        "grant_code": grant_code,
+        "user_grant": user_grant,
+    }
+
+    server_response = post_request(
+        server_name, "grant", body, node_certificate, node_key
+    )
 
     if server_response.json().get("status") == 200:
         print("Successfully granted access")
@@ -286,6 +297,28 @@ def delete(session_token):
     Send request to server with required parameters (action = 'delete')
     using post_request().
     """
+    file_name = input("Please enter file name to delete")
+    body = {
+        "document_id": file_name,
+        "user_id": user_id,
+    }
+
+    server_response = post_request(
+        server_name, "delete", body, node_certificate, node_key
+    )
+
+    if server_response.json().get("status") == 200:
+        print("Successfully deleted the file")
+
+    elif server_response.json().get("status") == 702:
+        print("Access denied deleting file")
+
+    elif server_response.json().get("status") == 704:
+        print("File or metadata not found on the server")
+
+    elif server_response.json().get("status") == 700:
+
+        print("Other failures")
 
     return server_response.json()
 
