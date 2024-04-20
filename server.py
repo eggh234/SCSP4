@@ -69,9 +69,9 @@ class login(Resource):
         """
 
         # Information coming from the client
-        user_id = data["user-id"]
+        user_id = data["user_id"]
         statement = data["statement"]
-        signed_statement = base64.b64decode(data["signed-statement"])
+        signed_statement = base64.b64decode(data["signed_statement"])
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
