@@ -313,60 +313,60 @@ def print_main_menu():
 
     return
 
-    # # TODO: Authenticate the user by calling login.
-    # If the login is successful, provide the following options to the user
-    #     1. Checkin
-    #     2. Checkout
-    #     3. Grant
-    #     4. Delete
-    #     5. Logout
-    # The options will be the indices as shown above. For example, if user
-    # enters 1, it must invoke the Checkin function. Appropriate functions
-    # should be invoked depending on the user input. Users should be able to
-    # perform these actions in a loop until they logout. This mapping should
-    # be maintained in your implementation for the options.
-
 
 def main():
-    # Attempt to login
+    """
+    # TODO: Authenticate the user by calling login.
+    If the login is successful, provide the following options to the user
+        1. Checkin
+        2. Checkout
+        3. Grant
+        4. Delete
+        5. Logout
+    The options will be the indices as shown above. For example, if user
+    enters 1, it must invoke the Checkin function. Appropriate functions
+    should be invoked depending on the user input. Users should be able to
+    perform these actions in a loop until they logout. This mapping should
+    be maintained in your implementation for the options.
+    """
+
+    # Initialize variables to keep track of progress
+    server_message = "UNKNOWN"
+    server_status = "UNKNOWN"
+    session_token = "UNKNOWN"
+    is_login = False
+
+    # test()
+    # return
     login_return = login()
 
-    # Extract server response from the login return value
-    server_message = login_return.get("message", "Login failed.")
-    server_status = login_return.get("status", None)
+    server_message = login_return["message"]
+    server_status = login_return["status"]
+    session_token = login_return["session_token"]
 
-    # Only proceed if the login was successful (status code 200)
+    print("\nThis is the server response")
+    print(server_message)
+    print(server_status)
+    print(session_token)
+
     if server_status == 200:
-        session_token = login_return.get("session_token", None)
-        if session_token:
-            # The user is logged in, proceed with the menu
-            print("\nThis is the server response:")
-            print(server_message)
-            print(f"Status: {server_status}")
-            print(f"Session Token: {session_token}")
+        is_login = True
 
-            is_logged_in = True
-            while is_logged_in:
-                print_main_menu()
-                user_choice = input("Please enter your choice: ")
-
-                if user_choice == "1":
-                    checkin(session_token)
-                elif user_choice == "2":
-                    checkout(session_token)
-                elif user_choice == "3":
-                    grant(session_token)
-                elif user_choice == "4":
-                    delete(session_token)
-                elif user_choice == "5":
-                    logout(session_token)
-                    is_logged_in = False  # Assume logout function changes this flag
-                else:
-                    print("Not a valid choice, please try again.")
+    while is_login:
+        print_main_menu()
+        user_choice = input()
+        if user_choice == "1":
+            checkin(session_token)
+        elif user_choice == "2":
+            checkout(session_token)
+        elif user_choice == "3":
+            grant(session_token)
+        elif user_choice == "4":
+            delete(session_token)
+        elif user_choice == "5":
+            logout(session_token)
         else:
-            print("No session token provided, cannot proceed.")
-    else:
-        print(f"Login failed: {server_message}")
+            print("not a valid choice")
 
 
 if __name__ == "__main__":
