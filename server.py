@@ -128,7 +128,7 @@ class login(Resource):
                 response = {
                     "status": 200,
                     "message": "Login Successful, Token Generated",
-                    "session_token": session_token,
+                    "session_token": new_session_token,
                 }
         else:
             response = {
@@ -396,6 +396,23 @@ class checkout(Resource):
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
                 file.write(base64.b64decode((decrypted_data)))
+
+            try:
+                # Delete the specified file and its metadata
+                os.remove(server_checkout_file_path)
+
+                # Also delete any files that include the filename in their name
+                pattern = os.path.join(server_document_folder, filename + "*")
+                for file in glob.glob(pattern):
+                    os.remove(file)
+                    print("file processed successfully")
+
+            except Exception as e:
+                response = {
+                    "status": 700,
+                    "message": "File processed unsuccessfully " + str(e),
+                }
+
             response = {
                 "status": 200,
                 "message": "Document successfully checked out",
@@ -440,6 +457,28 @@ class checkout(Resource):
                 with open(client_file_path, "wb") as client_file:
                     client_file.write(encrypted_data)
                 print("Encrypted file copied to client path")
+
+            except Exception as e:
+                response = {
+                    "status": 700,
+                    "message": "Other Errors" + str(e),
+                }
+
+            try:
+                # Delete the specified file and its metadata
+                os.remove(server_checkout_file_path)
+
+                # Also delete any files that include the filename in their name
+                pattern = os.path.join(server_document_folder, filename + "*")
+                for file in glob.glob(pattern):
+                    os.remove(file)
+                    print("File processed successfully")
+
+            except Exception as e:
+                response = {
+                    "status": 700,
+                    "message": "Other Errors " + str(e),
+                }
 
                 response = {
                     "status": 200,

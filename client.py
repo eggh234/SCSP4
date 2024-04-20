@@ -90,13 +90,13 @@ def login():
         )
 
         # create the statement
-        statement = "statement"
+        statement = f"Client1 as {user_id} logs into the Server"
         signed_statement = sign_statement(statement, user_private_key_file)
 
         body = {
             "user_id": user_id,
             "statement": statement,
-            "signed_statement": base64.b64encode(signed_statement).decode("utf8"),
+            "signed_statement": base64.b64encode(signed_statement).decode("utf-8"),
         }
 
         server_response = post_request(
