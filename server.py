@@ -718,8 +718,10 @@ class logout(Resource):
             with open(session_file_path, "r") as file:
                 sessions = json.load(file)
             # Remove the session for the user_id
+            # Check if user_id is in the sessions and delete it if present
             if user_id in sessions:
                 del sessions[user_id]
+                # Write the updated JSON data back to the file
                 with open(session_file_path, "w") as file:
                     json.dump(sessions, file)
             else:
