@@ -96,6 +96,7 @@ class login(Resource):
                         session_data = json.load(file)
                         # Verify user ID
                         meta_user_id = session_data.get("user_id", 0)
+                        session_token = session_data.get("session_token", 0)
                         if meta_user_id == user_id:
                             response = {
                                 "status": 200,
@@ -112,10 +113,10 @@ class login(Resource):
                         }
 
             # Generate a new session token if not found or if file doesn't exist
-            session_token = secrets.token_urlsafe(5)
+            new_session_token = secrets.token_urlsafe(5)
 
             # Write or update the session file with new user ID and token
-            session_data = {"user_id": user_id, "session_token": session_token}
+            session_data = {"user_id": user_id, "session_token": new_session_token}
             with open(session_file_path, "w") as json_file:
                 json.dump(session_data, json_file)
 
