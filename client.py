@@ -104,7 +104,9 @@ def login():
         )
 
         if server_response.json().get("status") == 200:
+            print("Document Successfully checked in")
             successful_login = True
+
         elif server_response.json().get("status") == 700:
             print("status: 700")
             print("message: Login Failed")
@@ -314,7 +316,7 @@ def logout(session_token):
     if server_response.json().get("status") == 200:
         print("Successfully Logged out")
 
-    elif server_response.json().get("status") == 702:
+    elif server_response.json().get("status") == 700:
         print("Failed to log out")
 
     return server_response.json()
