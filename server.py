@@ -31,9 +31,9 @@ class welcome(Resource):
         return "Welcome to the secure shared server!"
 
 
-def verify_statement(statement, signed_statement_base64, user_public_key_file):
-    print("Received signed-statement (base64):", signed_statement_base64)
-    signed_statement = base64.b64decode(signed_statement_base64)
+def verify_statement(statement, signed_statement, user_public_key_file):
+    print("Received signed-statement (base64):", signed_statement)
+    signed_statement = base64.b64decode(signed_statement)
     print("Decoded signed statement (bytes):", signed_statement)
 
     print("Original statement:", statement)
@@ -50,7 +50,7 @@ def verify_statement(statement, signed_statement_base64, user_public_key_file):
     try:
         public_key.verify(
             signed_statement,
-            encoded_statement,
+            statement,
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
             ),
@@ -77,8 +77,8 @@ class login(Resource):
         """
 
         # Information coming from the client
-        user_id = data.get("user-id")
-        statement = data.get("statement")
+        user_id = data["user-id"]
+        statement = data["statement"]
         signed_statement = base64.b64decode(data["signed-statement"])
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
@@ -91,11 +91,8 @@ class login(Resource):
             + user_id
             + ".pub"
         )
-        encoded_statement = statement.encode("utf-8")
 
-        success = verify_statement(
-            encoded_statement, signed_statement, user_public_key_file
-        )
+        success = verify_statement(statement, signed_statement, user_public_key_file)
 
         if success:
 
