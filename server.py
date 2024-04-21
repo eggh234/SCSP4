@@ -113,7 +113,6 @@ class login(Resource):
                                 "message": "Login Successful, Token Found",
                                 "session_token": session_token,
                             }
-                            print("test1")
                             return jsonify(response)
 
                     except json.JSONDecodeError:
@@ -124,7 +123,6 @@ class login(Resource):
                             "message": "Login Failed",
                             "session_token": "INVALID",
                         }
-                        print("test2")
                         return jsonify(response)
             else:
                 # Generate a new session token if not found or if file doesn't exist
@@ -546,16 +544,16 @@ class grant(Resource):
         if user_session_token != server_sesion_token:
             response = {"status": 700, "message": "Session token mismatch"}
             return jsonify(response)
-
+        print("a")
         # Check for the existence of the file and metadata
         if not os.path.isfile(server_checkout_file_path) or not os.path.isfile(
             aes_metadata_path
         ):
             response = {
-                "status": 704,
+                "status": 700,
                 "message": "File or metadata not found on the server",
             }
-
+        print("b")
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:
             aes_metadata = json.load(file)
@@ -563,9 +561,9 @@ class grant(Resource):
         # Check if user id matches
         aes_user_id = aes_metadata.get("user_id", 0)
         if aes_user_id != user_id:
-            response = {"status": 702, "message": "Access denied deleting file"}
+            response = {"status": 702, "message": "Access denied to grant access"}
             return jsonify(response)
-
+        print("c")
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
             response = {"status": 700, "message": "File not found on the server"}
@@ -581,7 +579,7 @@ class grant(Resource):
         if aes_user_id != user_id:
             response = {"status": 702, "message": "Access denied to grant access"}
             return jsonify(response)
-
+        print("d")
         # Read the grant flag from the metadata
         actual_grant_flag = aes_metadata.get("grant_flag", 0)
         if actual_grant_flag == 1:
