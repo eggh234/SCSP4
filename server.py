@@ -603,6 +603,8 @@ class grant(Resource):
             if target_grant_user in aes_metadata:
                     del aes_metadata[target_grant_user]
 
+            response = {"status": 200, "message": "Successfully granted access"}
+            return jsonify(response)
         if actual_grant_flag == 2:
             # Store user ID and security flag in the metadata file
             aes_metadata = {
@@ -623,7 +625,7 @@ class grant(Resource):
                 json.dump(aes_metadata, json_file)
             print(f"user id stored in {aes_metadata_path}")
 
-        return jsonify(response)
+
 
 
 class delete(Resource):
