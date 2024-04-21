@@ -417,7 +417,7 @@ class checkout(Resource):
 
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
-                file.write(base64.b64decode((decrypted_data)))
+                file.write(decrypted_data)
 
             try:
                 # Delete the specified file and its metadata
