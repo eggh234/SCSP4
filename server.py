@@ -23,6 +23,7 @@ import glob
 import secrets
 import re
 import time
+import datetime
 
 secure_shared_service = Flask(__name__)
 api = Api(secure_shared_service)
@@ -532,6 +533,13 @@ class grant(Resource):
         )
         target_grant_code = data.get("grant_code")
 
+        # Retrieve 'user_timer' from the data dictionary and safely convert it to an integer
+        try:
+            user_timer = int(data.get("user_timer", "0"))  # Default to 0 if 'user_timer' is not found
+        except ValueError:
+            print("Invalid timer value. Setting to default of 0 seconds.")
+            user_timer = 0
+
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
 
@@ -544,7 +552,7 @@ class grant(Resource):
         if user_session_token != server_sesion_token:
             response = {"status": 700, "message": "Session token mismatch"}
             return jsonify(response)
-        print("a")
+
         # Check for the existence of the file and metadata
         if not os.path.isfile(server_checkout_file_path) or not os.path.isfile(
             aes_metadata_path
@@ -553,7 +561,7 @@ class grant(Resource):
                 "status": 700,
                 "message": "File or metadata not found on the server",
             }
-        print("b")
+
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:
             aes_metadata = json.load(file)
@@ -563,7 +571,7 @@ class grant(Resource):
         if aes_user_id != user_id:
             response = {"status": 702, "message": "Access denied to grant access"}
             return jsonify(response)
-        print("c")
+
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
             response = {"status": 700, "message": "File not found on the server"}
@@ -579,9 +587,10 @@ class grant(Resource):
         if aes_user_id != user_id:
             response = {"status": 702, "message": "Access denied to grant access"}
             return jsonify(response)
-        print("d")
+
         # Read the grant flag from the metadata
-        actual_grant_flag = aes_metadata.get("grant_flag", 0)
+        actual_grant_flag = aes_metadata.get("grant_code", 0)
+
         if actual_grant_flag == 1:
             # Store user ID and security flag in the metadata file
             aes_metadata = {
