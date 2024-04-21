@@ -418,6 +418,9 @@ class checkout(Resource):
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
+
+            response = {"status": 200, "message": "Document Successfully checked out"}
+            return jsonify(response)
             
         elif security_flag == 2:
             # Verify integrity with the signature
@@ -460,6 +463,7 @@ class checkout(Resource):
                 with open(client_file_path, "wb") as client_file:
                     client_file.write(encrypted_data)
                 print("Encrypted file copied to client path")
+
                 response = {"status": 200, "message": "Document Successfully checked out"}
                 return jsonify(response)
 
