@@ -460,6 +460,8 @@ class checkout(Resource):
                 with open(client_file_path, "wb") as client_file:
                     client_file.write(encrypted_data)
                 print("Encrypted file copied to client path")
+                response = {"status": 200, "message": "Document Successfully checked out"}
+                return jsonify(response)
 
             except cryptography.exceptions.InvalidSignature:
                 print("Invalid signature")
