@@ -214,7 +214,7 @@ class checkin(Resource):
 
                 # Write or overwrite the file with the provided data, decoding it from base64
                 with open(server_checkin_file_path, "wb") as file:
-                    file.write(base64.b64decode(encrypted_file_data))
+                    file.write(base64.b64decode(client_file_data))
 
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
@@ -232,9 +232,7 @@ class checkin(Resource):
 
                 # os.remove(client_checkin_file_path)
                 # print("File processed successfully")
-
-                success = True
-
+                
             except Exception as e:
                 print(f"An exception occurred: {e}")
                 success = False
@@ -273,8 +271,6 @@ class checkin(Resource):
                         json.dump(aes_metadata, json_file)
                     print(f"user id stored in {aes_metadata_path}")
 
-                    success = True
-
                     # Sign the file data using the private key
                     signature = private_key.sign(
                         file_data_to_sign,
@@ -298,29 +294,20 @@ class checkin(Resource):
                         "status": 200,
                         "message": "Document successfully signed and signature file created",
                     }
+                    return jsonify(response)
+                
                 else:
                     print("Error: Original file not found for signing.")
                     response = {
-                        "status": 704,
+                        "status": 700,
                         "message": "Original file not found",
                     }
+                    return jsonify(response)
 
             except Exception as e:
                 print(f"An exception occurred: {e}")
                 response = {"status": 700, "message": "Signature process failed"}
-
-        if success:
-            response = {
-                "status": 200,
-                "message": "Document Successfully checked in",
-            }
-        else:
-            response = {
-                "status": 702,
-                "message": "Access denied checking in",
-            }
-
-        return jsonify(response)
+                return jsonify(response)
 
 
 class checkout(Resource):
