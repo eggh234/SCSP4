@@ -80,7 +80,7 @@ class login(Resource):
         )
 
         session_file_path = os.path.join(
-            server_document_folder, user_id + "user_sessions.txt"
+            server_document_folder, user_id + "_session.txt"
         )
         # complete the full path of the user public key filename
         # /home/cs6238/Desktop/Project4/server/application/userpublickeys/{user_public_key_filename}
@@ -178,7 +178,9 @@ class checkin(Resource):
         server_private_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
         )
-        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+        session_file_path = os.path.join(
+            server_document_folder, user_id + "_session.txt"
+        )
 
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
@@ -358,7 +360,9 @@ class checkout(Resource):
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
         )
 
-        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+        session_file_path = os.path.join(
+            server_document_folder, user_id + "_session.txt"
+        )
 
         signed_file_path = filename + ".sign"
 
@@ -524,7 +528,9 @@ class grant(Resource):
         user_id = data.get("user_id")
         user_grant_flag = data.get("grant_flag")
         target_grant_user = data.get("user_grant")
-        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+        session_file_path = os.path.join(
+            server_document_folder, user_id + "_session.txt"
+        )
 
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
@@ -609,7 +615,9 @@ class delete(Resource):
         )
         user_session_token = data.get("session_token")
 
-        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+        session_file_path = os.path.join(
+            server_document_folder, user_id + "_session.txt"
+        )
 
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
@@ -677,7 +685,9 @@ class logout(Resource):
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
-        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+        session_file_path = os.path.join(
+            server_document_folder, user_id + "_session.txt"
+        )
 
         user_session_token = data.get("session_token")
         # Ensure the directory exists before creating files
@@ -729,20 +739,6 @@ class logout(Resource):
                     # readlines() includes a newline character
                     if line.strip("\n") != content:
                         file.write(line)
-
-            # content2 = "user_id"
-            # with open(session_file_path, "w") as file:
-            #     for line in sessions:
-            #         # readlines() includes a newline character
-            #         if line.strip("\n") != content2:
-            #             file.write(line)
-
-            # content3 = "session_id"
-            # with open(session_file_path, "w") as file:
-            #     for line in sessions:
-            #         # readlines() includes a newline character
-            #         if line.strip("\n") != content3:
-            #             file.write(line)
 
             print(f"Session for user ID {user_id} has been deleted.")
             response = {"status": 200, "message": "Sucessfully logged out"}
