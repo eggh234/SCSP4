@@ -421,14 +421,11 @@ class checkout(Resource):
             decryptor = cipher.decryptor()
             with open(server_checkout_file_path, "rb") as enc_file:
                 encrypted_data = enc_file.read()
-                decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
-
-                # If the original content was a text file and you know its encoding, decode it back to a string
-                decrypted_text = decrypted_data.decode('utf-8')
+            decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
 
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
-                file.write(decrypted_data)  # Write decrypted data directly
+                file.write(base64.b64decode((decrypted_data)))
 
             try:
                 # Delete the specified file and its metadata
@@ -439,14 +436,11 @@ class checkout(Resource):
                     "status": 200,
                     "message": "Document successfully checked out",
                 }
-                return jsonify(response)
-            
             except Exception as e:
                 response = {
                     "status": 700,
                     "message": "File processed unsuccessfully " + str(e),
                 }
-                return jsonify(response)
 
         elif security_flag == 2:
             # Verify integrity with the signature
