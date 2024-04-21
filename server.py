@@ -40,8 +40,6 @@ def verify_statement(statement, signed_statement, user_public_key_file):
                 key_file.read(), backend=default_backend()
             )
 
-        # print("verify_statement.publicKey = ", public_key)
-
         # Verify the signature
         public_key.verify(
             signed_statement,
@@ -389,20 +387,21 @@ class checkout(Resource):
         with open(aes_metadata_path, "r") as file:
             aes_metadata = json.load(file)
 
-        # Verify user ID
-        aes_user_id = aes_metadata.get("user_id", 0)
+        # Verify user ID from metadata
+        aes_user_id = aes_metadata.get("user_id")
 
-        if aes_user_id != user_id:
-            response = {"status": 702, "message": "Access denied"}
-            return jsonify(response)
-        
         # Pattern to match files
         file_pattern = f"{server_document_folder}/filename_{user_id}_aes_key.txt.json"
 
         # Use glob to find matching files
         matching_files = glob.glob(file_pattern)
 
-        if not matching_files:
+        # Check if any of the conditions are true
+        if aes_user_id == user_id or matching_files:
+            # If user_id matches or files exist, continue processing
+            pass  # Replace 'pass' with actual processing code
+        else:
+            # If neither condition is met, return access denied
             response = {"status": 702, "message": "Access denied"}
             return jsonify(response)
 
@@ -426,7 +425,7 @@ class checkout(Resource):
 
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
-                file.write(base64.b64decode((decrypted_data)))
+                file.write(decrypted_data)  # Write decrypted data directly
 
             try:
                 # Delete the specified file and its metadata
@@ -817,7 +816,7 @@ class logout(Resource):
                     return jsonify(response)
 
             # All files checked in, remove user's session
-        pattern = os.path.join(server_document_folder, filename + "*")
+        pattern = os.path.join(server_document_folder, user_id + "*")
         for file in glob.glob(pattern):
             os.remove(file)
         print(f"Session for user ID {user_id} has been deleted.")
