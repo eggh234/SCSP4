@@ -590,8 +590,9 @@ class grant(Resource):
 
         # Read the grant flag from the metadata
         actual_grant_flag = aes_metadata.get("grant_code", 0)
-
+        print(actual_grant_flag)
         if actual_grant_flag == 1:
+            print("clause 1")
             # Store user ID and security flag in the metadata file
             aes_metadata = {
                 "user_id": target_grant_user,  # Adding the user ID
@@ -616,6 +617,7 @@ class grant(Resource):
             return jsonify(response)
         
         if actual_grant_flag == 2:
+            print("clause 2")
             aes_metadata = {
                 "user_id": target_grant_user,  # Adding the user ID
                 "grant_code": 2,
@@ -639,13 +641,17 @@ class grant(Resource):
             return jsonify(response)
 
         if actual_grant_flag == 3:
+            print("clause 3")
             aes_metadata = {
                 "user_id": target_grant_user,  # Adding the user ID
                 "grant_code": target_grant_code,
             }
-            with open(aes_metadata_path, "w") as json_file:
-                json.dump(aes_metadata, json_file)
-            print(f"user id stored in {aes_metadata_path}")
+            temp_access = os.path.join(
+                server_document_folder, filename + "_" + target_grant_user + "_AES_Key.txt.json"
+            )
+            with open(temp_access, "w") as json_file:
+                json.dump(temp_access, json_file)
+            print(f"user id stored in {temp_access}")
 
             # Set a timer
             print(f"Timer set for {user_timer} seconds.")
