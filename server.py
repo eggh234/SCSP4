@@ -232,10 +232,10 @@ class checkin(Resource):
 
                 # os.remove(client_checkin_file_path)
                 # print("File processed successfully")
-                
+
             except Exception as e:
-                print(f"An exception occurred: {e}")
-                success = False
+                response = {"status": 700, "message": "Signature process failed"}
+                return jsonify(response)
 
         elif security_flag == 2:
             try:
@@ -308,7 +308,8 @@ class checkin(Resource):
                 print(f"An exception occurred: {e}")
                 response = {"status": 700, "message": "Signature process failed"}
                 return jsonify(response)
-
+            
+        return jsonify(response)
 
 class checkout(Resource):
     """
