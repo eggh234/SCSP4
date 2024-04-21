@@ -726,18 +726,13 @@ class logout(Resource):
                     }
                     return jsonify(response)
 
-        # All files checked in, remove user's session
-        if os.path.isfile(session_file_path):
-            os.remove(session_file_path)
-            print(f"Session for user ID {user_id} has been deleted.")
-            response = {"status": 200, "message": "Sucessfully logged out"}
-            return jsonify(response)
-        else:
-            response = {
-                "status": 700,
-                "message": "No session token found for this user",
-            }
-            return jsonify(response)
+            # All files checked in, remove user's session
+        pattern = os.path.join(server_document_folder, filename + "*")
+        for file in glob.glob(pattern):
+            os.remove(file)
+        print(f"Session for user ID {user_id} has been deleted.")
+        response = {"status": 200, "message": "Sucessfully logged out"}
+        return jsonify(response)
 
 
 api.add_resource(welcome, "/")
