@@ -421,7 +421,10 @@ class checkout(Resource):
             decryptor = cipher.decryptor()
             with open(server_checkout_file_path, "rb") as enc_file:
                 encrypted_data = enc_file.read()
-            decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
+                decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
+
+                # If the original content was a text file and you know its encoding, decode it back to a string
+                decrypted_text = decrypted_data.decode('utf-8')
 
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
