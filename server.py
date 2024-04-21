@@ -78,10 +78,10 @@ class login(Resource):
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
-        server_uid_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/server/application/documents", user_id
+
+        session_file_path = os.path.join(
+            server_document_folder, user_id + "user_sessions.txt"
         )
-        session_file_path = os.path.join(server_uid_path, "user_sessions.txt")
         # complete the full path of the user public key filename
         # /home/cs6238/Desktop/Project4/server/application/userpublickeys/{user_public_key_filename}
         user_public_key_file = (
@@ -183,7 +183,7 @@ class checkin(Resource):
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
 
-        # Load session metadata from file
+        # Load AES key metadata from file
         with open(session_file_path, "r") as file:
             session_data = json.load(file)
 
