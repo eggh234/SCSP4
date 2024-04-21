@@ -2,9 +2,7 @@ from cryptography.hazmat.primitives import *
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
@@ -16,14 +14,15 @@ from flask import request
 # TODO: import additional modules as required
 import base64
 import json
-import shutil
 import os
 import base64
 import glob
 import secrets
-import re
 import time
-import datetime
+import threading
+import time
+import os
+import json
 
 secure_shared_service = Flask(__name__)
 api = Api(secure_shared_service)
@@ -614,7 +613,7 @@ class grant(Resource):
             if target_grant_user in aes_metadata:
                 del aes_metadata[target_grant_user]
                 print("Deleted User Access")
-                
+
             return jsonify(response)
         
         if actual_grant_flag == 2:
@@ -642,6 +641,7 @@ class grant(Resource):
 
             return jsonify(response)
 
+
         if actual_grant_flag == 3:
             print("clause 3")
             aes_metadata = {
@@ -659,20 +659,25 @@ class grant(Resource):
                 json.dump(temp_metadata, json_file)
 
             print(f"user id stored in {temp_access}")
-            
+
+            # Immediate response
             response = {"status": 200, "message": "Successfully granted access"}
             response_output = jsonify(response)
 
-            print(f"Timer set for {user_timer} seconds.")
-            time.sleep(user_timer)  # Wait for the duration set in user_timer
-            print("Timer ended. Performing the action now.")  # Action after timer ends
+            # Define and start a thread to handle the delay and subsequent actions
+            def handle_delayed_tasks():
+                print(f"Timer set for {user_timer} seconds.")
+                time.sleep(user_timer)  # Wait for the duration set in user_timer
+                print("Timer ended. Performing the action now.")  # Action after timer ends
 
-            print("test3")
+                print("test3")
 
-            # Delete the line after the timer ends
-            if target_grant_user in aes_metadata['user_id']:
-                del aes_metadata[target_grant_user]
-                print("Deleted User Access")
+                # Delete the file after the timer ends
+                os.remove(temp_access)
+                print(f"File {temp_access} has been removed.")
+
+            thread = threading.Thread(target=handle_delayed_tasks)
+            thread.start()
 
             return response_output
 
