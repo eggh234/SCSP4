@@ -231,13 +231,12 @@ def grant(session_token):
     """
     # Get document ID from user
     file_name = input("Please enter the file name: ")
-    print(file_name)
 
     print("Grant Permission Options:")
     print("1 = Checkin")
     print("2 = Checkout")
     print("3 = Checkin + Checkout")
-    grant_code = input("Please input grant permission number:")
+    grant_code = input("Please input grant permission number: ")
     user_grant = input("Please input user to grant to: ")
     user_timer = input("Please input permission time to live: " )
 

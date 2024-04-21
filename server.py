@@ -391,7 +391,18 @@ class checkout(Resource):
 
         # Verify user ID
         aes_user_id = aes_metadata.get("user_id", 0)
+
         if aes_user_id != user_id:
+            response = {"status": 702, "message": "Access denied"}
+            return jsonify(response)
+        
+        # Pattern to match files
+        file_pattern = f"{server_document_folder}/filename_{user_id}_aes_key.txt.json"
+
+        # Use glob to find matching files
+        matching_files = glob.glob(file_pattern)
+
+        if not matching_files:
             response = {"status": 702, "message": "Access denied"}
             return jsonify(response)
 
