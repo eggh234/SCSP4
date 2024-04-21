@@ -728,18 +728,7 @@ class logout(Resource):
 
         # All files checked in, remove user's session
         if os.path.isfile(session_file_path):
-            with open(session_file_path, "r") as file:
-                sessions = json.load(file)
-
-            # delete matching content
-            content = "user_id" + user_id + "session_token" + user_session_token
-            print(content)
-            with open(session_file_path, "w") as file:
-                for line in sessions:
-                    # readlines() includes a newline character
-                    if line.strip("\n") != content:
-                        file.write(line)
-
+            os.remove(session_file_path)
             print(f"Session for user ID {user_id} has been deleted.")
             response = {"status": 200, "message": "Sucessfully logged out"}
             return jsonify(response)
