@@ -214,7 +214,7 @@ class checkin(Resource):
 
                 # Write or overwrite the file with the provided data, decoding it from base64
                 with open(server_checkin_file_path, "wb") as file:
-                    file.write(base64.b64decode(client_file_data))
+                    file.write(base64.b64decode(encrypted_file_data))
 
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
@@ -232,6 +232,7 @@ class checkin(Resource):
 
                 response = {"status": 200, "message": "Document Successfully checked in"}
                 return jsonify(response)
+            
                 # os.remove(client_checkin_file_path)
                 # print("File processed successfully")
 
