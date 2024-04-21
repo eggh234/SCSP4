@@ -230,6 +230,8 @@ class checkin(Resource):
                     json.dump(aes_metadata, json_file)
                 print(f"AES key, IV, and user id stored in {aes_metadata_path}")
 
+                response = {"status": 200, "message": "Document Successfully checked in"}
+                return jsonify(response)
                 # os.remove(client_checkin_file_path)
                 # print("File processed successfully")
 
@@ -308,8 +310,6 @@ class checkin(Resource):
                 print(f"An exception occurred: {e}")
                 response = {"status": 700, "message": "Signature process failed"}
                 return jsonify(response)
-            
-        return jsonify(response)
 
 class checkout(Resource):
     """
