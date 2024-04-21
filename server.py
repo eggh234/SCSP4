@@ -614,6 +614,7 @@ class grant(Resource):
             if target_grant_user in aes_metadata:
                 del aes_metadata[target_grant_user]
                 print("Deleted User Access")
+                
             return jsonify(response)
         
         if actual_grant_flag == 2:
@@ -638,6 +639,7 @@ class grant(Resource):
             if target_grant_user in aes_metadata:
                 del aes_metadata[target_grant_user]
                 print("Deleted User Access")
+
             return jsonify(response)
 
         if actual_grant_flag == 3:
@@ -649,24 +651,30 @@ class grant(Resource):
             temp_access = os.path.join(
                 server_document_folder, filename + "_" + target_grant_user + "_AES_Key.txt.json"
             )
+            temp_metadata = {
+                "user_id": target_grant_user,  # Adding the user ID
+                "grant_code": target_grant_code,
+            }
             with open(temp_access, "w") as json_file:
-                json.dump(temp_access, json_file)
-            print(f"user id stored in {temp_access}")
+                json.dump(temp_metadata, json_file)
 
-            # Set a timer
+            print(f"user id stored in {temp_access}")
+            
+            response = {"status": 200, "message": "Successfully granted access"}
+            response_output = jsonify(response)
+
             print(f"Timer set for {user_timer} seconds.")
             time.sleep(user_timer)  # Wait for the duration set in user_timer
             print("Timer ended. Performing the action now.")  # Action after timer ends
 
             print("test3")
-            response = {"status": 200, "message": "Successfully granted access"}
 
             # Delete the line after the timer ends
-            if target_grant_user in aes_metadata:
+            if target_grant_user in aes_metadata['user_id']:
                 del aes_metadata[target_grant_user]
                 print("Deleted User Access")
 
-            return jsonify(response)
+            return response_output
 
 
 
