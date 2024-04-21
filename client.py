@@ -190,11 +190,14 @@ def checkout(session_token):
     """
     # Get document ID from user
     file_name = input("Please enter the file name: ")
-    print(file_name)
+
+    client_base_path = "/home/cs6238/Desktop/Project4/client1/documents/checkout"
+
     body = {
         "document_id": file_name,
         "user_id": user_id,
         "session_token": session_token,
+        "base_path": client_base_path,
     }
     server_response = post_request(
         server_name, "checkout", body, node_certificate, node_key
@@ -269,11 +272,13 @@ def delete(session_token):
     Send request to server with required parameters (action = 'delete')
     using post_request().
     """
+    client_base_path = "/home/cs6238/Desktop/Project4/client1/documents/checkin"
     file_name = input("Please enter file name to delete: ")
     body = {
         "document_id": file_name,
         "user_id": user_id,
         "session_token": session_token,
+        "base_path": client_base_path,
     }
 
     server_response = post_request(
