@@ -527,12 +527,12 @@ class grant(Resource):
         server_checkout_file_path = os.path.join(server_document_folder, filename)
 
         user_id = data.get("user_id")
-        user_grant_flag = data.get("grant_flag")
         target_grant_user = data.get("user_grant")
         user_timer = data.get("user_timer")
         session_file_path = os.path.join(
             server_document_folder, user_id + "_session.txt"
         )
+        target_grant_code = data.get("grant_code")
 
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
@@ -599,14 +599,16 @@ class grant(Resource):
             time.sleep(user_timer)  # Wait for the duration set in user_timer
             print("Timer ended. Performing the action now.")  # Action after timer ends
 
+            print("test1")
+            response = {"status": 200, "message": "Successfully granted access"}
+
             # Delete the line after the timer ends
             if target_grant_user in aes_metadata:
-                    del aes_metadata[target_grant_user]
-
-            response = {"status": 200, "message": "Successfully granted access"}
+                del aes_metadata[target_grant_user]
+                print("Deleted User Access")
             return jsonify(response)
+        
         if actual_grant_flag == 2:
-            # Store user ID and security flag in the metadata file
             aes_metadata = {
                 "user_id": target_grant_user,  # Adding the user ID
                 "grant_code": 2,
@@ -615,15 +617,43 @@ class grant(Resource):
                 json.dump(aes_metadata, json_file)
             print(f"user id stored in {aes_metadata_path}")
 
+            # Set a timer
+            print(f"Timer set for {user_timer} seconds.")
+            time.sleep(user_timer)  # Wait for the duration set in user_timer
+            print("Timer ended. Performing the action now.")  # Action after timer ends
+
+            print("test2")
+            response = {"status": 200, "message": "Successfully granted access"}
+
+            # Delete the line after the timer ends
+            if target_grant_user in aes_metadata:
+                del aes_metadata[target_grant_user]
+                print("Deleted User Access")
+            return jsonify(response)
+
         if actual_grant_flag == 3:
-            # Store user ID and security flag in the metadata file
             aes_metadata = {
                 "user_id": target_grant_user,  # Adding the user ID
-                "grant_code": user_grant_flag,
+                "grant_code": target_grant_code,
             }
             with open(aes_metadata_path, "w") as json_file:
                 json.dump(aes_metadata, json_file)
             print(f"user id stored in {aes_metadata_path}")
+
+            # Set a timer
+            print(f"Timer set for {user_timer} seconds.")
+            time.sleep(user_timer)  # Wait for the duration set in user_timer
+            print("Timer ended. Performing the action now.")  # Action after timer ends
+
+            print("test3")
+            response = {"status": 200, "message": "Successfully granted access"}
+
+            # Delete the line after the timer ends
+            if target_grant_user in aes_metadata:
+                del aes_metadata[target_grant_user]
+                print("Deleted User Access")
+
+            return jsonify(response)
 
 
 
