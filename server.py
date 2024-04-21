@@ -383,7 +383,7 @@ class checkout(Resource):
         aes_user_id = aes_metadata.get("user_id")
 
         # Pattern to match files
-        file_pattern = f"{server_document_folder}/filename_{user_id}_aes_key.txt.json"
+        file_pattern = f"{server_document_folder}/{filename}_{user_id}_AES_Key.txt.json"
 
         # Use glob to find matching files
         matching_files = glob.glob(file_pattern)
@@ -418,24 +418,6 @@ class checkout(Resource):
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
                 file.write(decrypted_data)
-
-            try:
-                # Delete the specified file and its metadata
-                os.remove(server_checkout_file_path)
-                print("file processed successfully")
-
-                response = {
-                    "status": 200,
-                    "message": "Document successfully checked out",
-                }
-                return jsonify(response)
-            
-            except Exception as e:
-                response = {
-                    "status": 700,
-                    "message": "File processed unsuccessfully " + str(e),
-                }
-                return jsonify(response)
             
         elif security_flag == 2:
             # Verify integrity with the signature
@@ -488,26 +470,6 @@ class checkout(Resource):
                 print(f"An exception occurred during signature verification: {e}")
                 response = {"status": 700, "message": "Signature verification failed"}
                 return jsonify(response)
-
-            try:
-                # Delete the specified file and its metadata
-                os.remove(server_checkout_file_path)
-                print("File processed successfully")
-
-                response = {
-                    "status": 200,
-                    "message": "Document successfully checked out and signature verified",
-                }
-                return jsonify(response)
-            
-            except Exception as e:
-                print(f"An exception occurred while deleting the file: {e}")
-                response = {
-                    "status": 700,
-                    "message": "Other Errors " + str(e),
-                }
-                return jsonify(response)
-
 
 class grant(Resource):
     """
