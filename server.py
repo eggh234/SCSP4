@@ -212,9 +212,12 @@ class checkin(Resource):
                     encryptor.update(client_file_data.encode()) + encryptor.finalize()
                 )
 
-                # Write or overwrite the file with the provided data, decoding it from base64
+                # Base64-encode the encrypted file data
+                encrypted_file_data_base64 = base64.b64encode(encrypted_file_data)
+
+                # Write or overwrite the file with the Base64-encoded data
                 with open(server_checkin_file_path, "wb") as file:
-                    file.write(base64.b64decode(encrypted_file_data))
+                    file.write(encrypted_file_data_base64)
 
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
@@ -230,14 +233,14 @@ class checkin(Resource):
                     json.dump(aes_metadata, json_file)
                 print(f"AES key, IV, and user id stored in {aes_metadata_path}")
 
-                response = {"status": 200, "message": "Document Successfully checked in"}
-                return jsonify(response)
-            
                 # os.remove(client_checkin_file_path)
                 # print("File processed successfully")
 
+                response = {"status": 200, "message": "Document Successfully checked in"}
+                return jsonify(response)
+            
             except Exception as e:
-                response = {"status": 700, "message": "Signature process failed"}
+                response = {"status": 700, "message": "Encryption process failed"}
                 return jsonify(response)
 
         elif security_flag == 2:
