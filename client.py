@@ -61,7 +61,6 @@ def sign_statement(statement, user_private_key_file):
         )
     return signature
 
-
 def login():
     """
     # TODO: Accept the
@@ -239,7 +238,8 @@ def grant(session_token):
     print("2 = Checkout")
     print("3 = Checkin + Checkout")
     grant_code = input("Please input grant permission number:")
-    user_grant = input("Please input user to grant to")
+    user_grant = input("Please input user to grant to: ")
+    user_timer = input("Please input permission time to live: " )
 
     body = {
         "document_id": file_name,
@@ -247,6 +247,7 @@ def grant(session_token):
         "grant_code": grant_code,
         "user_grant": user_grant,
         "session_token": session_token,
+        "user_timer": user_timer,
     }
 
     server_response = post_request(

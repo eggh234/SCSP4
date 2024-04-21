@@ -22,6 +22,7 @@ import base64
 import glob
 import secrets
 import re
+import time
 
 secure_shared_service = Flask(__name__)
 api = Api(secure_shared_service)
@@ -528,6 +529,7 @@ class grant(Resource):
         user_id = data.get("user_id")
         user_grant_flag = data.get("grant_flag")
         target_grant_user = data.get("user_grant")
+        user_timer = data.get("user_timer")
         session_file_path = os.path.join(
             server_document_folder, user_id + "_session.txt"
         )
@@ -583,11 +585,43 @@ class grant(Resource):
         # Read the grant flag from the metadata
         actual_grant_flag = aes_metadata.get("grant_flag", 0)
         if actual_grant_flag == 1:
-            print("checkin only")
+            # Store user ID and security flag in the metadata file
+            aes_metadata = {
+                "user_id": target_grant_user,  # Adding the user ID
+                "grant_code": 1,
+            }
+            with open(aes_metadata_path, "w") as json_file:
+                json.dump(aes_metadata, json_file)
+            print(f"user id stored in {aes_metadata_path}")
+
+            # Set a timer
+            print(f"Timer set for {user_timer} seconds.")
+            time.sleep(user_timer)  # Wait for the duration set in user_timer
+            print("Timer ended. Performing the action now.")  # Action after timer ends
+
+            # Delete the line after the timer ends
+            if target_grant_user in aes_metadata:
+                    del aes_metadata[target_grant_user]
+
         if actual_grant_flag == 2:
-            print("checkout only")
+            # Store user ID and security flag in the metadata file
+            aes_metadata = {
+                "user_id": target_grant_user,  # Adding the user ID
+                "grant_code": 2,
+            }
+            with open(aes_metadata_path, "w") as json_file:
+                json.dump(aes_metadata, json_file)
+            print(f"user id stored in {aes_metadata_path}")
+
         if actual_grant_flag == 3:
-            print("both")
+            # Store user ID and security flag in the metadata file
+            aes_metadata = {
+                "user_id": target_grant_user,  # Adding the user ID
+                "grant_code": user_grant_flag,
+            }
+            with open(aes_metadata_path, "w") as json_file:
+                json.dump(aes_metadata, json_file)
+            print(f"user id stored in {aes_metadata_path}")
 
         return jsonify(response)
 
