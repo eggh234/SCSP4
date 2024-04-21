@@ -428,12 +428,15 @@ class checkout(Resource):
                     "status": 200,
                     "message": "Document successfully checked out",
                 }
+                return jsonify(response)
+            
             except Exception as e:
                 response = {
                     "status": 700,
                     "message": "File processed unsuccessfully " + str(e),
                 }
-
+                return jsonify(response)
+            
         elif security_flag == 2:
             # Verify integrity with the signature
             signed_file_path = os.path.join(server_document_folder, filename + ".sign")
@@ -480,6 +483,7 @@ class checkout(Resource):
                 print("Invalid signature")
                 response = {"status": 703, "message": "Invalid signature"}
                 return jsonify(response)
+            
             except Exception as e:
                 print(f"An exception occurred during signature verification: {e}")
                 response = {"status": 700, "message": "Signature verification failed"}
@@ -494,13 +498,15 @@ class checkout(Resource):
                     "status": 200,
                     "message": "Document successfully checked out and signature verified",
                 }
+                return jsonify(response)
+            
             except Exception as e:
                 print(f"An exception occurred while deleting the file: {e}")
                 response = {
                     "status": 700,
                     "message": "Other Errors " + str(e),
                 }
-            return jsonify(response)
+                return jsonify(response)
 
 
 class grant(Resource):
