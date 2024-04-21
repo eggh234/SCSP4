@@ -78,7 +78,10 @@ class login(Resource):
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
-        session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
+        server_uid_path = os.path.join(
+            "/home/cs6238/Desktop/Project4/server/application/documents", user_id
+        )
+        session_file_path = os.path.join(server_uid_path, "user_sessions.txt")
         # complete the full path of the user public key filename
         # /home/cs6238/Desktop/Project4/server/application/userpublickeys/{user_public_key_filename}
         user_public_key_file = (
@@ -175,15 +178,12 @@ class checkin(Resource):
         server_private_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
         )
-        client_checkin_file_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/client1/documents/checkin", filename
-        )
         session_file_path = os.path.join(server_document_folder, "user_sessions.txt")
 
         # Ensure the directory exists before creating files
         os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
 
-        # Load AES key metadata from file
+        # Load session metadata from file
         with open(session_file_path, "r") as file:
             session_data = json.load(file)
 
@@ -730,19 +730,19 @@ class logout(Resource):
                     if line.strip("\n") != content:
                         file.write(line)
 
-            content2 = "user_id"
-            with open(session_file_path, "w") as file:
-                for line in sessions:
-                    # readlines() includes a newline character
-                    if line.strip("\n") != content2:
-                        file.write(line)
+            # content2 = "user_id"
+            # with open(session_file_path, "w") as file:
+            #     for line in sessions:
+            #         # readlines() includes a newline character
+            #         if line.strip("\n") != content2:
+            #             file.write(line)
 
-            content3 = "session_id"
-            with open(session_file_path, "w") as file:
-                for line in sessions:
-                    # readlines() includes a newline character
-                    if line.strip("\n") != content3:
-                        file.write(line)
+            # content3 = "session_id"
+            # with open(session_file_path, "w") as file:
+            #     for line in sessions:
+            #         # readlines() includes a newline character
+            #         if line.strip("\n") != content3:
+            #             file.write(line)
 
             print(f"Session for user ID {user_id} has been deleted.")
             response = {"status": 200, "message": "Sucessfully logged out"}
