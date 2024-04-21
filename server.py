@@ -436,11 +436,14 @@ class checkout(Resource):
                     "status": 200,
                     "message": "Document successfully checked out",
                 }
+                return jsonify(response)
+            
             except Exception as e:
                 response = {
                     "status": 700,
                     "message": "File processed unsuccessfully " + str(e),
                 }
+                return jsonify(response)
 
         elif security_flag == 2:
             # Verify integrity with the signature
