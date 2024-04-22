@@ -475,10 +475,8 @@ class checkout(Resource):
                 encrypted_data = file.read()
 
             # Decode from Base64
-            decoded_signature = base64.b64decode(encrypted_data)
+            decoded_signature = encrypted_data.decode("utf-8")
             print(encrypted_data)
-            # Decode from UTF-8
-            decoded_string = decoded_signature.decode("utf-8")
             print(decoded_signature)
 
             # Verify the signature
