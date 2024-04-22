@@ -434,7 +434,7 @@ class checkout(Resource):
             decoded_string = decoded_final_data.decode("utf-8")
 
             # Write the decrypted data to the client's checkout path
-            with open(client_file_path, "wb") as file:
+            with open(client_file_path, "w") as file:
                 file.write(decoded_string)
 
             response = {"status": 200, "message": "Document Successfully checked out"}
