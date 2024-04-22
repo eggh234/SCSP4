@@ -376,9 +376,11 @@ class checkout(Resource):
         # Checks for the existence of the necessary files
         if not os.path.isfile(server_checkout_file_path):
             response = {"status": 704, "message": "File not found on the server"}
+            return jsonify(response)
 
         if not os.path.isfile(aes_metadata_path):
-            response = {"status": 704, "message": "Encryption metadata not found"}
+            response = {"status": 704, "message": "Metadata not found"}
+            return jsonify(response)
 
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:

@@ -368,8 +368,6 @@ def main():
 
     print("\nThis is the server response")
     print(server_message)
-    print(server_status)
-    print(session_token)
 
     if server_status == 200:
         is_login = True
