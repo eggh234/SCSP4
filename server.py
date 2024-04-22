@@ -170,7 +170,7 @@ class checkin(Resource):
         server_checkin_file_path = os.path.join(server_document_folder, filename)
 
         aes_metadata_path = os.path.join(
-            server_document_folder, filename + "_AES_Key.txt.json"
+            server_document_folder, filename + "_metadata.json"
         )
         server_private_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.key"
@@ -341,7 +341,7 @@ class checkout(Resource):
         server_checkout_file_path = os.path.join(server_document_folder, filename)
 
         aes_metadata_path = os.path.join(
-            server_document_folder, filename + "_AES_Key.txt.json"
+            server_document_folder, filename + "_metadata.json"
         )
 
         user_id = data.get("user_id")
@@ -388,7 +388,7 @@ class checkout(Resource):
         aes_user_id = aes_metadata.get("user_id")
 
         # Pattern to match files
-        file_pattern = f"{server_document_folder}/{filename}_{user_id}_AES_Key.txt.json"
+        file_pattern = f"{server_document_folder}/{filename}_{user_id}_metadata.json"
 
         # Use glob to find matching files
         matching_files = glob.glob(file_pattern)
@@ -517,7 +517,7 @@ class grant(Resource):
         filename = data.get("document_id")
 
         aes_metadata_path = os.path.join(
-            server_document_folder, filename + "_AES_Key.txt.json"
+            server_document_folder, filename + "_metadata.json"
         )
 
         server_checkout_file_path = os.path.join(server_document_folder, filename)
@@ -535,7 +535,7 @@ class grant(Resource):
         }
         temp_access = os.path.join(
             server_document_folder,
-            filename + "_" + target_grant_user + "_AES_Key.txt.json",
+            filename + "_" + target_grant_user + "_metadata.json",
         )
         temp_metadata = {
             "user_id": target_grant_user,  # Adding the user ID
@@ -694,7 +694,7 @@ class delete(Resource):
         server_checkout_file_path = os.path.join(server_document_folder, filename)
 
         aes_metadata_path = os.path.join(
-            server_document_folder, filename + "_AES_Key.txt.json"
+            server_document_folder, filename + "_metadata.json"
         )
         user_session_token = data.get("session_token")
 
@@ -790,7 +790,7 @@ class logout(Resource):
         metadata_files = [
             f
             for f in os.listdir(server_document_folder)
-            if f.endswith("_AES_Key.txt.json")
+            if f.endswith("_metadata.json")
         ]
 
         # Read user_id from each metadata file and check if the corresponding file exists
@@ -799,7 +799,7 @@ class logout(Resource):
                 metadata = json.load(file)
 
             if metadata["user_id"] == user_id:
-                filename = metadata_file.replace("_AES_Key.txt.json", "")
+                filename = metadata_file.replace("_metadata.json", "")
 
                 if not os.path.isfile(os.path.join(server_document_folder, filename)):
                     # File not checked in, ask the user to check in
