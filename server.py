@@ -233,8 +233,11 @@ class checkin(Resource):
                     json.dump(aes_metadata, json_file)
                 print(f"AES key, IV, and user id stored in {aes_metadata_path}")
 
-                # os.remove(client_checkin_file_path)
-                # print("File processed successfully")
+                response = {
+                    "status": 200,
+                    "message": "Document Successfully checked in",
+                }
+                return jsonify(response)
 
             except Exception as e:
                 print(f"An exception occurred: {e}")
@@ -243,7 +246,6 @@ class checkin(Resource):
                     "message": "Document encryption failure",
                 }
                 return jsonify(response)
-                success = False
 
         elif security_flag == 2:
             try:
