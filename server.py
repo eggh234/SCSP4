@@ -293,12 +293,8 @@ class checkin(Resource):
                         ),
                         hashes.SHA256(),
                     )
-
                     # Encode the signature
-                    signature_bytes = signature.encode("utf-8")
-                    print(signature_bytes)
-                    encoded_signature = base64.b64encode(signature_bytes)
-                    print(encoded_signature)
+                    encoded_signature = base64.b64encode(signature)
 
                     # Write the signature to a .sign file associated with the document
                     signature_file_path = server_checkin_file_path + ".sign"
@@ -474,19 +470,18 @@ class checkout(Resource):
                 signature = sign_file.read()
             print(signature)
             # Read the original file data
-            with open(server_checkout_file_path, "rb") as file:
+            with open(server_checkout_file_path, "r") as file:
                 encrypted_data = file.read()
+
             print(encrypted_data)
             # Decode from Base64
             decoded_signature = base64.b64decode(signature)
             print(decoded_signature)
-            # Decode from UTF-8
-            decoded_string = decoded_signature.decode("utf-8")
-            print(decoded_string)
+
             # Verify the signature
             try:
                 public_key.verify(
-                    decoded_string,
+                    decoded_signature,
                     encrypted_data,
                     padding.PSS(
                         mgf=padding.MGF1(hashes.SHA256()),
