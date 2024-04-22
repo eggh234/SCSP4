@@ -294,14 +294,14 @@ class checkin(Resource):
                         hashes.SHA256(),
                     )
 
+                    # Encode the signature
+                    encoded_signature = base64.b64encode(signature)
+                    print(encoded_signature)
                     # Write the signature to a .sign file associated with the document
                     signature_file_path = server_checkin_file_path + ".sign"
                     with open(signature_file_path, "wb") as sign_file:
-                        sign_file.write(signature)
+                        sign_file.write(encoded_signature)
                     print(f"Signature created and stored at {signature_file_path}")
-
-                    # os.remove(client_checkin_file_path)
-                    # print("File processed successfully")
 
                     response = {
                         "status": 200,
@@ -473,6 +473,13 @@ class checkout(Resource):
             # Read the encrypted data
             with open(server_checkout_file_path, "rb") as file:
                 encrypted_data = file.read()
+
+            # Decode from Base64
+            decoded_signature = base64.b64decode(encrypted_data)
+            print(encrypted_data)
+            # Decode from UTF-8
+            decoded_string = decoded_signature.decode("utf-8")
+            print(decoded_signature)
 
             # Verify the signature
             try:
