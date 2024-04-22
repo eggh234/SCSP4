@@ -1,3 +1,5 @@
+FINAL VERSION
+
 openssl genrsa -out client1.key 2048
 openssl genrsa -out client2.key 2048
 openssl req -new -key client1.key -out client1.csr
