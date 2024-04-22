@@ -61,6 +61,7 @@ def sign_statement(statement, user_private_key_file):
         )
     return signature
 
+
 def login():
     """
     # TODO: Accept the
@@ -190,14 +191,11 @@ def checkout(session_token):
     """
     # Get document ID from user
     file_name = input("Please enter the file name: ")
-
-    client_base_path = "/home/cs6238/Desktop/Project4/client1/documents/checkout"
-
+    print(file_name)
     body = {
         "document_id": file_name,
         "user_id": user_id,
         "session_token": session_token,
-        "base_path": client_base_path,
     }
     server_response = post_request(
         server_name, "checkout", body, node_certificate, node_key
@@ -239,7 +237,7 @@ def grant(session_token):
     print("3 = Checkin + Checkout")
     grant_code = input("Please input grant permission number: ")
     user_grant = input("Please input user to grant to: ")
-    user_timer = input("Please input permission time to live: " )
+    user_timer = input("Please input permission time to live: ")
 
     body = {
         "document_id": file_name,
@@ -272,13 +270,11 @@ def delete(session_token):
     Send request to server with required parameters (action = 'delete')
     using post_request().
     """
-    client_base_path = "/home/cs6238/Desktop/Project4/client1/documents/checkin"
     file_name = input("Please enter file name to delete: ")
     body = {
         "document_id": file_name,
         "user_id": user_id,
         "session_token": session_token,
-        "base_path": client_base_path,
     }
 
     server_response = post_request(
