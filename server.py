@@ -467,22 +467,23 @@ class checkout(Resource):
             print("Public key loaded")
 
             # Read the signature
-            with open(signed_file_path, "rb") as sign_file:
+            with open(signed_file_path, "r") as sign_file:
                 signature = sign_file.read()
-
-            # Read the encrypted data
-            with open(server_checkout_file_path, "rb") as file:
+            print(signature)
+            # Read the original file data
+            with open(server_checkout_file_path, "r") as file:
                 encrypted_data = file.read()
-
-            # Decode from Base64
-            decoded_signature = encrypted_data.decode("utf-8")
             print(encrypted_data)
+            # Decode from Base64
+            decoded_signature = base64.b64decode(signature)
             print(decoded_signature)
-
+            # Decode from UTF-8
+            decoded_string = decoded_signature.decode("utf-8")
+            print(decoded_string)
             # Verify the signature
             try:
                 public_key.verify(
-                    signature,
+                    decoded_string,
                     encrypted_data,
                     padding.PSS(
                         mgf=padding.MGF1(hashes.SHA256()),
