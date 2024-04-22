@@ -1,3 +1,5 @@
+# FINAL VERSION
+
 from cryptography.hazmat.primitives import *
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -352,7 +354,7 @@ class checkout(Resource):
         client_file_path = os.path.join(
             "/home/cs6238/Desktop/Project4", client_name, "documents/checkout", filename
         )
-        
+
         server_public_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
         )
