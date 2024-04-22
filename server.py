@@ -335,6 +335,8 @@ class checkout(Resource):
         data = request.get_json()
         filename = data.get("document_id")
         user_session_token = data.get("session_token")
+        client_name = data.get("client_name")
+
         server_document_folder = (
             "/home/cs6238/Desktop/Project4/server/application/documents"
         )
@@ -348,9 +350,9 @@ class checkout(Resource):
         user_id = data.get("user_id")
 
         client_file_path = os.path.join(
-            "/home/cs6238/Desktop/Project4/client1/documents/checkout", filename
+            "/home/cs6238/Desktop/Project4", client_name, "documents/checkout", filename
         )
-
+        
         server_public_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
         )

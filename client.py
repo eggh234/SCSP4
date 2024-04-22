@@ -83,10 +83,19 @@ def login():
         # get the user private key filename or default to user1.key
         private_key_filename = input(" Private Key Filename: ") or "user1.key"
 
+        # Get the current working directory
+        current_working_directory = os.getcwd()
+
+        # Extract the last part of the path, which should be 'Client1' or 'Client2'
+        client_name = os.path.basename(current_working_directory)
+
         # complete the full path of the user private key filename (depends on the client)
         # Ex: '/home/cs6238/Desktop/Project4/client1/userkeys/' + private_key_filename
-        user_private_key_file = (
-            "/home/cs6238/Desktop/Project4/client1/userkeys/" + private_key_filename
+        user_private_key_file = os.path.join(
+            "/home/cs6238/Desktop/Project4",
+            client_name,
+            "userkeys",
+            private_key_filename,
         )
 
         # create the statement
@@ -133,10 +142,18 @@ def checkin(session_token):
         print("Invalid input. Please use numeric values.")
         exit()
 
+    # Get the current working directory
+    current_working_directory = os.getcwd()
+
+    # Extract the last part of the path, which should be 'Client1' or 'Client2'
+    client_name = os.path.basename(current_working_directory)
+
     # Get document ID from user
     file_name = input("Please enter the file name: ")
     client_checkin_file_path = os.path.join(
-        "/home/cs6238/Desktop/Project4/client1/documents/checkin",
+        "/home/cs6238/Desktop/Project4",
+        client_name,
+        "documents/checkin",
         file_name,
     )
 
@@ -191,11 +208,18 @@ def checkout(session_token):
     """
     # Get document ID from user
     file_name = input("Please enter the file name: ")
-    print(file_name)
+
+    # Get the current working directory
+    current_working_directory = os.getcwd()
+
+    # Extract the last part of the path, which should be 'Client1' or 'Client2'
+    client_name = os.path.basename(current_working_directory)
+
     body = {
         "document_id": file_name,
         "user_id": user_id,
         "session_token": session_token,
+        "client_name": client_name,
     }
     server_response = post_request(
         server_name, "checkout", body, node_certificate, node_key
@@ -332,13 +356,6 @@ def print_main_menu():
     print("    3. Grant")
     print("    4. Delete")
     print("    5. Logout")
-    # Get the current working directory
-    current_working_directory = os.getcwd()
-
-    # Extract the last part of the path, which should be 'Client1' or 'Client2'
-    client_name = os.path.basename(current_working_directory)
-
-    print("Client name:", client_name)
 
     return
 
