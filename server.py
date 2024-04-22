@@ -725,6 +725,7 @@ class delete(Resource):
                 "status": 704,
                 "message": "File or metadata not found on the server",
             }
+            return jsonify(response)
 
         # Load AES key metadata from file
         with open(aes_metadata_path, "r") as file:
@@ -749,13 +750,13 @@ class delete(Resource):
                 "status": 200,
                 "message": "Successfully deleted the file and associated data",
             }
+            return jsonify(response)
         except Exception as e:
             response = {
                 "status": 700,
                 "message": "Failed to delete the files: " + str(e),
             }
-
-        return jsonify(response)
+            return jsonify(response)
 
 
 class logout(Resource):
