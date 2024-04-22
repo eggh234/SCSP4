@@ -420,20 +420,22 @@ class checkout(Resource):
             # Open the file containing the base64-encoded encrypted data
             with open(server_checkout_file_path, "rb") as enc_file:
                 base64_encrypted_data = enc_file.read()
-            print(base64_encrypted_data)
+
             # Decode the base64-encoded encrypted data to get the binary encrypted data
             encrypted_data = base64.b64decode(base64_encrypted_data)
-            print(encrypted_data)
+
             # Decrypt the binary encrypted data
             decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
-            print(decrypted_data)
+
+            # Decode from Base64
             decoded_final_data = base64.b64decode(decrypted_data)
-            print(decoded_final_data)
+
+            # Decode from UTF-8
             decoded_string = decoded_final_data.decode("utf-8")
-            print(decoded_string)
+
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
-                file.write(decrypted_data)
+                file.write(decoded_string)
 
             response = {"status": 200, "message": "Document Successfully checked out"}
             return jsonify(response)
