@@ -212,12 +212,9 @@ class checkin(Resource):
                     encryptor.update(client_file_data.encode()) + encryptor.finalize()
                 )
 
-                # Base64-encode the encrypted file data
-                encrypted_file_data_base64 = base64.b64encode(encrypted_file_data)
-
-                # Write or overwrite the file with the Base64-encoded data
+                # Write or overwrite the file with the provided data, decoding it from base64
                 with open(server_checkin_file_path, "wb") as file:
-                    file.write(encrypted_file_data_base64)
+                    file.write(base64.b64decode(encrypted_file_data))
 
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
@@ -236,12 +233,14 @@ class checkin(Resource):
                 # os.remove(client_checkin_file_path)
                 # print("File processed successfully")
 
-                response = {"status": 200, "message": "Document Successfully checked in"}
-                return jsonify(response)
-            
             except Exception as e:
-                response = {"status": 700, "message": "Encryption process failed"}
+                print(f"An exception occurred: {e}")
+                response = {
+                    "status": 700,
+                    "message": "Document encryption failure",
+                }
                 return jsonify(response)
+                success = False
 
         elif security_flag == 2:
             try:
@@ -301,7 +300,7 @@ class checkin(Resource):
                         "message": "Document successfully signed and signature file created",
                     }
                     return jsonify(response)
-                
+
                 else:
                     print("Error: Original file not found for signing.")
                     response = {
@@ -314,6 +313,7 @@ class checkin(Resource):
                 print(f"An exception occurred: {e}")
                 response = {"status": 700, "message": "Signature process failed"}
                 return jsonify(response)
+
 
 class checkout(Resource):
     """
@@ -343,9 +343,7 @@ class checkout(Resource):
 
         user_id = data.get("user_id")
 
-        client_file_path = os.path.join(
-            base_path, filename
-        )
+        client_file_path = os.path.join(base_path, filename)
 
         server_public_key_path = (
             "/home/cs6238/Desktop/Project4/server/certs/secure-shared-store.pub"
@@ -419,11 +417,11 @@ class checkout(Resource):
 
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
-                file.write(decrypted_data)
+                file.write(base64.b64decode((decrypted_data)))
 
             response = {"status": 200, "message": "Document Successfully checked out"}
             return jsonify(response)
-            
+
         elif security_flag == 2:
             # Verify integrity with the signature
             signed_file_path = os.path.join(server_document_folder, filename + ".sign")
@@ -466,18 +464,22 @@ class checkout(Resource):
                     client_file.write(encrypted_data)
                 print("Encrypted file copied to client path")
 
-                response = {"status": 200, "message": "Document Successfully checked out"}
+                response = {
+                    "status": 200,
+                    "message": "Document Successfully checked out",
+                }
                 return jsonify(response)
 
             except cryptography.exceptions.InvalidSignature:
                 print("Invalid signature")
                 response = {"status": 703, "message": "Invalid signature"}
                 return jsonify(response)
-            
+
             except Exception as e:
                 print(f"An exception occurred during signature verification: {e}")
                 response = {"status": 700, "message": "Signature verification failed"}
                 return jsonify(response)
+
 
 class grant(Resource):
     """
@@ -514,7 +516,8 @@ class grant(Resource):
             "grant_code": target_grant_code,
         }
         temp_access = os.path.join(
-            server_document_folder, filename + "_" + target_grant_user + "_AES_Key.txt.json"
+            server_document_folder,
+            filename + "_" + target_grant_user + "_AES_Key.txt.json",
         )
         temp_metadata = {
             "user_id": target_grant_user,  # Adding the user ID
@@ -522,7 +525,9 @@ class grant(Resource):
         }
         # Retrieve 'user_timer' from the data dictionary and safely convert it to an integer
         try:
-            user_timer = int(data.get("user_timer", "0"))  # Default to 0 if 'user_timer' is not found
+            user_timer = int(
+                data.get("user_timer", "0")
+            )  # Default to 0 if 'user_timer' is not found
         except ValueError:
             print("Invalid timer value. Setting to default of 0 seconds.")
             user_timer = 0
@@ -591,12 +596,14 @@ class grant(Resource):
             def handle_delayed_tasks():
                 print(f"Timer set for {user_timer} seconds.")
                 time.sleep(user_timer)  # Wait for the duration set in user_timer
-                print("Timer ended. Performing the action now.")  # Action after timer ends
+                print(
+                    "Timer ended. Performing the action now."
+                )  # Action after timer ends
 
                 # Delete the file after the timer ends
                 os.remove(temp_access)
                 print(f"File {temp_access} has been removed.")
-        
+
         if actual_grant_flag == 2:
             with open(temp_access, "w") as json_file:
                 json.dump(temp_metadata, json_file)
@@ -610,7 +617,9 @@ class grant(Resource):
             def handle_delayed_tasks():
                 print(f"Timer set for {user_timer} seconds.")
                 time.sleep(user_timer)  # Wait for the duration set in user_timer
-                print("Timer ended. Performing the action now.")  # Action after timer ends
+                print(
+                    "Timer ended. Performing the action now."
+                )  # Action after timer ends
 
                 # Delete the file after the timer ends
                 os.remove(temp_access)
@@ -620,7 +629,6 @@ class grant(Resource):
             thread.start()
 
             return response_output
-
 
         if actual_grant_flag == 3:
             with open(temp_access, "w") as json_file:
@@ -635,7 +643,9 @@ class grant(Resource):
             def handle_delayed_tasks():
                 print(f"Timer set for {user_timer} seconds.")
                 time.sleep(user_timer)  # Wait for the duration set in user_timer
-                print("Timer ended. Performing the action now.")  # Action after timer ends
+                print(
+                    "Timer ended. Performing the action now."
+                )  # Action after timer ends
 
                 # Delete the file after the timer ends
                 os.remove(temp_access)
