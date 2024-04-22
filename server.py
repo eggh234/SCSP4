@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
+
 from flask import Flask
 from flask_restful import Api, Resource
 from flask import jsonify
@@ -448,7 +449,10 @@ class checkout(Resource):
 
             if not os.path.isfile(signed_file_path):
                 print("Signature file not found")
-                response = {"status": 704, "message": "Signature file not found"}
+                response = {
+                    "status": 704,
+                    "message": "Check out failed due to broken integrity",
+                }
                 return jsonify(response)
 
             # Load the server's public key for signature verification
@@ -490,14 +494,9 @@ class checkout(Resource):
                 }
                 return jsonify(response)
 
-            except cryptography.exceptions.InvalidSignature:
-                print("Invalid signature")
-                response = {"status": 703, "message": "Invalid signature"}
-                return jsonify(response)
-
             except Exception as e:
-                print(f"An exception occurred during signature verification: {e}")
-                response = {"status": 700, "message": "Signature verification failed"}
+                print(f"An exception occurred: {e}")
+                response = {"status": 703, "message": "Signature process failed"}
                 return jsonify(response)
 
 
