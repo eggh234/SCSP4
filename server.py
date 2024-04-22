@@ -212,9 +212,12 @@ class checkin(Resource):
                     encryptor.update(client_file_data.encode()) + encryptor.finalize()
                 )
 
-                # Write or overwrite the file with the provided data, decoding it from base64
+                # Base64-encode the encrypted file data
+                encrypted_file_data_base64 = base64.b64encode(encrypted_file_data)
+
+                # Write or overwrite the file with the Base64-encoded data
                 with open(server_checkin_file_path, "wb") as file:
-                    file.write(base64.b64decode(encrypted_file_data))
+                    file.write(encrypted_file_data_base64)
 
                 print(f"File created (or overwritten) at {server_checkin_file_path}")
 
@@ -411,13 +414,20 @@ class checkout(Resource):
                 algorithms.AES(key), modes.CFB(iv), backend=default_backend()
             )
             decryptor = cipher.decryptor()
+
+            # Open the file containing the base64-encoded encrypted data
             with open(server_checkout_file_path, "rb") as enc_file:
-                encrypted_data = enc_file.read()
+                base64_encrypted_data = enc_file.read()
+
+            # Decode the base64-encoded encrypted data to get the binary encrypted data
+            encrypted_data = base64.b64decode(base64_encrypted_data)
+
+            # Decrypt the binary encrypted data
             decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
 
             # Write the decrypted data to the client's checkout path
             with open(client_file_path, "wb") as file:
-                file.write(base64.b64decode((decrypted_data)))
+                file.write(decrypted_data)
 
             response = {"status": 200, "message": "Document Successfully checked out"}
             return jsonify(response)
