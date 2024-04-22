@@ -295,8 +295,11 @@ class checkin(Resource):
                     )
 
                     # Encode the signature
-                    encoded_signature = base64.b64encode(signature)
+                    signature_bytes = signature.encode("utf-8")
+                    print(signature_bytes)
+                    encoded_signature = base64.b64encode(signature_bytes)
                     print(encoded_signature)
+
                     # Write the signature to a .sign file associated with the document
                     signature_file_path = server_checkin_file_path + ".sign"
                     with open(signature_file_path, "wb") as sign_file:
@@ -467,11 +470,11 @@ class checkout(Resource):
             print("Public key loaded")
 
             # Read the signature
-            with open(signed_file_path, "r") as sign_file:
+            with open(signed_file_path, "rb") as sign_file:
                 signature = sign_file.read()
             print(signature)
             # Read the original file data
-            with open(server_checkout_file_path, "r") as file:
+            with open(server_checkout_file_path, "rb") as file:
                 encrypted_data = file.read()
             print(encrypted_data)
             # Decode from Base64
