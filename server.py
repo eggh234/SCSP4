@@ -211,10 +211,10 @@ class checkin(Resource):
                 encrypted_file_data = (
                     encryptor.update(client_file_data.encode()) + encryptor.finalize()
                 )
-                print(encrypted_file_data)
+
                 # Base64-encode the encrypted file data
                 encrypted_file_data_base64 = base64.b64encode(encrypted_file_data)
-                print(encrypted_file_data_base64)
+
                 # Write or overwrite the file with the Base64-encoded data
                 with open(server_checkin_file_path, "wb") as file:
                     file.write(encrypted_file_data_base64)
