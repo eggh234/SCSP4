@@ -332,6 +332,13 @@ def print_main_menu():
     print("    3. Grant")
     print("    4. Delete")
     print("    5. Logout")
+    # Get the current working directory
+    current_working_directory = os.getcwd()
+
+    # Extract the last part of the path, which should be 'Client1' or 'Client2'
+    client_name = os.path.basename(current_working_directory)
+
+    print("Client name:", client_name)
 
     return
 
