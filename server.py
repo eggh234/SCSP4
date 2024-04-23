@@ -468,15 +468,13 @@ class checkout(Resource):
             # Read the signature
             with open(signed_file_path, "rb") as sign_file:
                 signature = sign_file.read()
-            print(signature)
+
             # Read the original file data
-            with open(server_checkout_file_path, "r") as file:
+            with open(server_checkout_file_path, "rb") as file:
                 encrypted_data = file.read()
 
-            print(encrypted_data)
             # Decode from Base64
             decoded_signature = base64.b64decode(signature)
-            print(decoded_signature)
 
             # Verify the signature
             try:
