@@ -468,19 +468,21 @@ class checkout(Resource):
             # Read the signature
             with open(signed_file_path, "rb") as sign_file:
                 signature = sign_file.read()
-
+            print(signature)
             # Read the original file data
-            with open(server_checkout_file_path, "rb") as file:
-                original_data = file.read()
+            with open(server_checkout_file_path, "r") as file:
+                encrypted_data = file.read()
 
+            print(encrypted_data)
             # Decode from Base64
             decoded_signature = base64.b64decode(signature)
+            print(decoded_signature)
 
             # Verify the signature
             try:
                 public_key.verify(
                     decoded_signature,
-                    original_data,
+                    encrypted_data,
                     padding.PSS(
                         mgf=padding.MGF1(hashes.SHA256()),
                         salt_length=padding.PSS.MAX_LENGTH,
@@ -490,8 +492,8 @@ class checkout(Resource):
                 print("Signature verified")
 
                 # Since the signature is verified, copy the encrypted data to the client's path
-                with open(client_file_path, "w") as client_file:
-                    client_file.write(original_data)
+                with open(client_file_path, "wb") as client_file:
+                    client_file.write(encrypted_data)
                 print("Encrypted file copied to client path")
 
                 response = {
