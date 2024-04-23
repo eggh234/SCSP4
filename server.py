@@ -447,7 +447,7 @@ class checkout(Resource):
             return jsonify(response)
 
         elif security_flag == 2:
-            # Verify integrity with the signature
+            # Verify the integrity with the signature
             signed_file_path = os.path.join(server_document_folder, filename + ".sign")
 
             if not os.path.isfile(signed_file_path):
