@@ -423,7 +423,7 @@ class checkout(Resource):
             )
             decryptor = cipher.decryptor()
 
-            # Open the file containing the base64-encoded encrypted data
+            # Open the file containing the base64 encoded encrypted data
             with open(server_checkout_file_path, "rb") as enc_file:
                 base64_encrypted_data = enc_file.read()
 
