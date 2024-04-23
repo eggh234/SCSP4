@@ -215,7 +215,7 @@ class checkin(Resource):
                     encryptor.update(client_file_data.encode()) + encryptor.finalize()
                 )
 
-                # Base64-encode the encrypted file data
+                # Base64 encode the encrypted file data
                 encrypted_file_data_base64 = base64.b64encode(encrypted_file_data)
 
                 # Write or overwrite the file with the Base64-encoded data
